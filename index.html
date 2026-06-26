@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DebtMatch - Lo Swipe dei Prestiti</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #141419;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        h1 { margin-bottom: 5px; color: #fd3a73; font-size: 2rem; }
+        p { margin: 0 0 20px 0; color: #a4b0be; }
+
+        #game-container {
+            position: relative;
+            width: 340px;
+            height: 460px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* La Carta dello Swipe */
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 380px;
+            background: #1e1e24;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            border: 2px solid #2f3542;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-align: center;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            transform-origin: bottom center;
+        }
+
+        .card h3 { color: #ff9f43; margin-top: 10px; font-size: 1.4rem; }
+        .card .amount { font-size: 2rem; font-weight: bold; color: #fff; margin: 10px 0; }
+        .card .details { background: #2f3542; padding: 15px; border-radius: 12px; font-size: 1.05rem; line-height: 1.5; }
+        .card .taeg { font-size: 1.3rem; font-weight: bold; color: #ff4757; margin-top: 10px; }
+        .card .safe-taeg { color: #2ed573; }
+
+        /* Classi per l'animazione di Swipe */
+        .swipe-left { transform: translate(-200%, 50px) rotate(-30deg) !important; opacity: 0; }
+        .swipe-right { transform: translate(200%, 50px) rotate(30deg) !important; opacity: 0; }
+
+        /* Barra del Sovraindebitamento */
+        #debt-bar-container {
+            width: 340px;
+            background: #2f3542;
+            height: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        #debt-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #2ed573, #ffa502, #ff4757);
+            transition: width 0.3s ease;
+        }
+
+        /* Pulsanti di Controllo */
+        .controls {
+            display: flex;
+            gap: 40px;
+            margin-top: 15px;
+        }
+        .btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.9); }
+        #btn-reject { background: #ff4757; color: white; }
+        #btn-accept { background: #2ed573; color: white; }
+        
+        #score-board { font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; color: #00d2d3;}
+    </style>
+</head>
+<body>
+
+<h1>🏦 DebtMatch</h1>
+<p>Trova il prestito perfetto! Swipe a DESTRA per accettare, SINISTRA per rifiutare.</p>
+
+<div id="score-board">Contratti Approvati: <span id="score-txt">0</span>/5</div>
+<div style="font-size: 0.9rem; color: #a4b0be; margin-bottom: 5px;">Rischio Sovraindebitamento:</div>
+<div id="debt-bar-container"><div id="debt-bar"></div></div>
+
+<div id="game-container">
+    <div id="active-card" class="card"></div>
+</div>
+
+<div class="controls">
+    <button class="btn" id="btn-reject" onclick="handleSwipe('left')">❌</button>
+    <button class="btn" id="btn-accept" onclick="handleSwipe('right')">❤️</button>
+</div>
+
+<p style="font-size: 0.85rem; color: #57606f; margin-top: 20px;">Usa le FRECCE della tastiera (⬅️ / ➡️) come scorciatoia!</p>
+
+<script>
+    // Database delle carte/proposte di finanziamento
+    const carteBanca = [
+        { titolo: "🚗 Prestito Auto Nuova", importo: "15.000€", dettagli: "Rata: 250€/mese<br>Durata: 5 Anni", taeg: "4.5%", conveniente: true },
+        { titolo: "🎓 Prestito Universitario", importo: "5.000€", dettagli: "Rata: 90€/mese<br>Durata: 5 Anni", taeg: "3.2%", conveniente: true },
+        { titolo: "📱 Nuovo Smartphone Top", importo: "1.200€", dettagli: "Rata: 120€/mese<br>Durata: 1 Anno", taeg: "19.8%", conveniente: false }, // TAEG altissimo per un telefono
+        { titolo: "🏠 Anticipo Ristrutturazione", importo: "20.000€", dettagli: "Rata: 380€/mese<br>Durata: 5 Anni", taeg: "5.1%", conveniente: true },
+        { titolo: "💸 Vacanza Last Minute", importo: "3.000€", dettagli: "Rata: 50€/mese<br>Durata: 10 Anni", taeg: "24.5%", conveniente: false }, // Ti indebiti per 10 anni per una vacanza!
+        { titolo: "💻 PC Gaming estremo", importo: "2.500€", dettagli: "Rata: 220€/mese<br>Durata: 1 Anno", taeg: "18.2%", conveniente: false }
+    ];
+
+    let punteggio = 0;
+    let sovraindebitamento = 0; // Va da 0 a 100
+    let cartaAttuale = null;
+    let inAnimazione = false;
+
+    function generaCarta() {
+        if (punteggio >= 5) {
+            alert("Vittoria! Hai selezionato i prestiti migliori sul mercato senza indebitarti troppo!");
+            resetGioco();
+            return;
+        }
+        if (sovraindebitamento >= 100) {
+            alert("Game Over! Sei finito in sovraindebitamento. Le rate dei prestiti sbagliati hanno superato le tue entrate!");
+            resetGioco();
+            return;
+        }
+
+        // Prende una carta casuale dal database
+        cartaAttuale = carteBanca[Math.floor(Math.random() * carteBanca.length)];
+        
+        const cardEl = document.getElementById("active-card");
+        cardEl.className = "card"; // Reset delle classi di swipe
+        
+        // Colore del testo del TAEG dinamico in base al pericolo per confondere il giocatore
+        const taegClasse = parseFloat(cartaAttuale.taeg) > 10 ? "taeg" : "taeg safe-taeg";
+
+        cardEl.innerHTML = `
+            <div>
+                <h3>${cartaAttuale.titolo}</h3>
+                <div class="amount">${cartaAttuale.importo}</div>
+            </div>
+            <div class="details">
+                ${cartaAttuale.dettagli}
+                <div class="${taegClasse}">TAEG: ${cartaAttuale.taeg}</div>
+            </div>
+            <div style="font-size:0.8rem; color:#718093;">Guarda bene il TAEG prima di scegliere!</div>
+        `;
+    }
+
+    function handleSwipe(direzione) {
+        if (inAnimazione) return;
+        inAnimazione = true;
+
+        const cardEl = document.getElementById("active-card");
+        
+        if (direzione === 'left') {
+            cardEl.classList.add('swipe-left');
+            // SE RIFIUTI (Swipe sinistra):
+            if (cartaAttuale.conveniente === false) {
+                // Hai fatto bene a rifiutare una truffa!
+                punteggio++; 
+            } else {
+                // Hai rifiutato un buon prestito, nessun danno grave ma non fai punti
+            }
+        } else if (direzione === 'right') {
+            cardEl.classList.add('swipe-right');
+            // SE ACCETTI (Swipe destra):
+            if (cartaAttuale.conveniente === true) {
+                // Ottimo affare preso!
+                punteggio++;
+                sovraindebitamento += 15; // Un buon debito sostenibile alza un po' la barra
+            } else {
+                // Hai accettato un prestito tossico! Penalità grave sul debito
+                sovraindebitamento += 45; 
+            }
+        }
+
+        // Aggiorna la grafica dopo il volo della carta
+        setTimeout(() => {
+            document.getElementById("score-txt").innerText = punteggio;
+            document.getElementById("debt-bar").style.width = Math.min(100, sovraindebitamento) + "%";
+            inAnimazione = false;
+            generaCarta();
+        }, 350); // Tempo allineato all'animazione CSS
+    }
+
+    function resetGioco() {
+        punteggio = 0;
+        sovraindebitamento = 0;
+        document.getElementById("score-txt").innerText = punteggio;
+        document.getElementById("debt-bar").style.width = "0%";
+        generaCarta();
+    }
+
+    // Controlli da tastiera
+    window.addEventListener('keydown', function(e) {
+        if (e.key === "ArrowLeft") handleSwipe('left');
+        if (e.key === "ArrowRight") handleSwipe('right');
+    });
+
+    // Avvio del gioco
+    generaCarta();
+</script>
+
+</body>
+</html>
