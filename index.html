@@ -3,86 +3,266 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DebtMatch - Lo Swipe dei Prestiti</title>
+    <title>DebtMatch v2 - Il Labirinto del Credito</title>
     <style>
+        :root {
+            --bg-color: #0f0f13;
+            --card-bg: #1a1a24;
+            --card-back-bg: #15151e;
+            --primary: #fd3a73;
+            --success: #2ed573;
+            --warning: #ffa502;
+            --danger: #ff4757;
+            --text-main: #ffffff;
+            --text-muted: #a4b0be;
+            --accent: #00d2d3;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #141419;
-            color: #fff;
+            background: var(--bg-color);
+            color: var(--text-main);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             overflow: hidden;
-        }
-        h1 { margin-bottom: 5px; color: #fd3a73; font-size: 2rem; }
-        p { margin: 0 0 20px 0; color: #a4b0be; }
-
-        #game-container {
-            position: relative;
-            width: 340px;
-            height: 460px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            user-select: none;
         }
 
-        /* La Carta dello Swipe */
-        .card {
-            position: absolute;
-            width: 100%;
-            height: 380px;
-            background: #1e1e24;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            border: 2px solid #2f3542;
-            padding: 20px;
+        .header-section {
+            text-align: center;
+            margin-bottom: 10px;
+            z-index: 10;
+        }
+
+        h1 { margin: 0 0 5px 0; color: var(--primary); font-size: 2.2rem; text-shadow: 0 0 10px rgba(253, 58, 115, 0.3); }
+        p { margin: 0; color: var(--text-muted); font-size: 0.95rem; }
+
+        /* Dashboard Statistiche */
+        #dashboard {
+            width: 360px;
+            background: rgba(25, 25, 35, 0.8);
+            border: 1px solid #2f3542;
+            border-radius: 14px;
+            padding: 12px 15px;
+            margin-bottom: 15px;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
+            gap: 8px;
+            backdrop-filter: blur(5px);
+        }
+
+        .stats-row {
+            display: flex;
             justify-content: space-between;
-            text-align: center;
-            transition: transform 0.4s ease, opacity 0.4s ease;
-            transform-origin: bottom center;
+            font-size: 1rem;
+            font-weight: bold;
         }
 
-        .card h3 { color: #ff9f43; margin-top: 10px; font-size: 1.4rem; }
-        .card .amount { font-size: 2rem; font-weight: bold; color: #fff; margin: 10px 0; }
-        .card .details { background: #2f3542; padding: 15px; border-radius: 12px; font-size: 1.05rem; line-height: 1.5; }
-        .card .taeg { font-size: 1.3rem; font-weight: bold; color: #ff4757; margin-top: 10px; }
-        .card .safe-taeg { color: #2ed573; }
+        .stat-label { color: var(--text-muted); font-weight: normal; }
+        #month-txt { color: var(--accent); }
+        #active-loans-txt { color: var(--warning); }
 
-        /* Classi per l'animazione di Swipe */
-        .swipe-left { transform: translate(-200%, 50px) rotate(-30deg) !important; opacity: 0; }
-        .swipe-right { transform: translate(200%, 50px) rotate(30deg) !important; opacity: 0; }
-
-        /* Barra del Sovraindebitamento */
-        #debt-bar-container {
-            width: 340px;
+        /* Barra Sovraindebitamento */
+        .progress-container {
+            width: 100%;
+        }
+        .progress-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .bar-bg {
+            width: 100%;
             background: #2f3542;
-            height: 12px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            height: 14px;
+            border-radius: 7px;
             overflow: hidden;
+            border: 1px solid #3f4656;
         }
-        #debt-bar {
+        .bar-fill {
             width: 0%;
             height: 100%;
-            background: linear-gradient(90deg, #2ed573, #ffa502, #ff4757);
-            transition: width 0.3s ease;
+            background: linear-gradient(90deg, var(--success), var(--warning), var(--danger));
+            transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* Pulsanti di Controllo */
+        /* Notifiche Tipo Turno (es. Turno Obbligatorio) */
+        #turn-badge {
+            background: #2f3542;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-block;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+        .badge-normal { color: var(--text-muted); border: 1px solid #3f4656; }
+        .badge-forced { color: #fff; background: var(--danger) !important; border: 1px solid var(--primary); animation: pulse 1.5s infinite; }
+
+        /* CONTENITORE CARTE CON FLIP 3D */
+        #game-container {
+            position: relative;
+            width: 340px;
+            height: 420px;
+            perspective: 1000px;
+        }
+
+        .card-perspective {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-perspective.flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* Facciate delle carte */
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 24px;
+            padding: 24px;
+            box-sizing: border-box;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            border: 2px solid #2f3542;
+        }
+
+        .card-front {
+            background: var(--card-bg);
+            background: linear-gradient(135deg, var(--card-bg) 0%, #222230 100%);
+        }
+
+        .card-back {
+            background: var(--card-back-bg);
+            background: linear-gradient(135deg, var(--card-back-bg) 0%, #101017 100%);
+            transform: rotateY(180deg);
+            border-color: var(--accent);
+        }
+
+        /* Elementi della carta */
+        .card-header {
+            text-align: center;
+        }
+        .card-title {
+            color: var(--warning);
+            margin: 0 0 8px 0;
+            font-size: 1.35rem;
+        }
+        .card-amount {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #fff;
+            letter-spacing: -1px;
+        }
+        .card-body {
+            background: rgba(47, 53, 66, 0.6);
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 1rem;
+            line-height: 1.5;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .taeg-box {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--danger);
+            margin-top: 8px;
+            text-align: center;
+        }
+        .taeg-safe { color: var(--success); }
+
+        .card-footer-tip {
+            font-size: 0.8rem;
+            color: #718093;
+            text-align: center;
+            font-style: italic;
+        }
+
+        /* Contenuto Retro Carta (Dettagli Istituto) */
+        .bank-info-title {
+            color: var(--accent);
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .bank-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+        .clause-box {
+            background: rgba(253, 58, 115, 0.1);
+            border-left: 4px solid var(--primary);
+            padding: 12px;
+            border-radius: 0 12px 12px 0;
+            font-size: 0.9rem;
+            color: #f5f6fa;
+            margin-top: 10px;
+        }
+        .clause-box.safe-bank {
+            background: rgba(46, 213, 115, 0.1);
+            border-left-color: var(--success);
+        }
+
+        /* Classi Animazione Swipe (Volo via) */
+        .swipe-left-anim { transform: translate(-200%, 30px) rotate(-40deg) !important; opacity: 0; transition: all 0.4s ease; }
+        .swipe-right-anim { transform: translate(200%, 30px) rotate(40deg) !important; opacity: 0; transition: all 0.4s ease; }
+
+        /* Controlli di Interfaccia */
+        .interaction-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-top: 15px;
+            width: 340px;
+        }
+
+        .flip-btn {
+            background: #2f3542;
+            color: #fff;
+            border: 1px solid #4f566d;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .flip-btn:hover { background: #3f4656; border-color: var(--accent); }
+
         .controls {
             display: flex;
-            gap: 40px;
-            margin-top: 15px;
+            justify-content: center;
+            gap: 35px;
+            width: 100%;
         }
         .btn {
-            width: 60px;
-            height: 60px;
+            width: 65px;
+            height: 65px;
             border-radius: 50%;
             border: none;
             cursor: pointer;
@@ -90,139 +270,614 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            transition: transform 0.1s;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            transition: transform 0.1s, box-shadow 0.2s;
         }
         .btn:active { transform: scale(0.9); }
-        #btn-reject { background: #ff4757; color: white; }
-        #btn-accept { background: #2ed573; color: white; }
-        
-        #score-board { font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; color: #00d2d3;}
+        #btn-reject { background: var(--danger); color: white; box-shadow: 0 0 15px rgba(255, 71, 87, 0.3); }
+        #btn-accept { background: var(--success); color: white; box-shadow: 0 0 15px rgba(46, 213, 115, 0.3); }
+
+        .shortcuts-tip {
+            font-size: 0.8rem;
+            color: #57606f;
+            margin-top: 12px;
+        }
+
+        /* MODALE EVENTI / IMPREVISTI OVERLAY */
+        #event-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(10, 10, 15, 0.95);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #event-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .event-modal {
+            background: #1e1e2a;
+            border: 2px solid var(--accent);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 400px;
+            padding: 25px;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            transform: scale(0.8);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #event-overlay.active .event-modal {
+            transform: scale(1);
+        }
+
+        .event-icon {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+        .event-title {
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin: 0 0 12px 0;
+        }
+        .event-desc {
+            font-size: 1rem;
+            color: #f5f6fa;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 12px;
+        }
+        .event-effect {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 22px;
+        }
+        .effect-bad { color: var(--danger); }
+        .effect-good { color: var(--success); }
+
+        .event-btn {
+            background: linear-gradient(90deg, #00cec9, #00d2d3);
+            color: #101015;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 210, 211, 0.4);
+            transition: transform 0.1s;
+        }
+        .event-btn:active { transform: scale(0.95); }
+
+        /* Log Notifiche Rapide in basso */
+        #news-feed {
+            width: 340px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--accent);
+            height: 20px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
+        }
     </style>
 </head>
 <body>
 
-<h1>🏦 DebtMatch</h1>
-<p>Trova il prestito perfetto! Swipe a DESTRA per accettare, SINISTRA per rifiutare.</p>
+<div class="header-section">
+    <h1>🏦 DebtMatch v2</h1>
+    <p>Pianifica i tuoi debiti e sopravvivi alle prove della vita!</p>
+</div>
 
-<div id="score-board">Contratti Approvati: <span id="score-txt">0</span>/5</div>
-<div style="font-size: 0.9rem; color: #a4b0be; margin-bottom: 5px;">Rischio Sovraindebitamento:</div>
-<div id="debt-bar-container"><div id="debt-bar"></div></div>
+<!-- Cruscotto di gioco -->
+<div id="dashboard">
+    <div class="stats-row">
+        <div><span class="stat-label">Progresso:</span> <span id="month-txt">Mese 1 / 12</span></div>
+        <div><span class="stat-label">Prestiti Attivi:</span> <span id="active-loans-txt">0</span></div>
+    </div>
+    <div class="progress-container">
+        <div class="progress-label">
+            <span>Rischio Sovraindebitamento</span>
+            <span id="debt-pct-txt">0%</span>
+        </div>
+        <div class="bar-bg">
+            <div id="debt-bar" class="bar-fill"></div>
+        </div>
+    </div>
+</div>
 
+<div id="turn-badge" class="badge-normal">Turno Ordinario</div>
+
+<!-- Spazio della Carta Interattiva -->
 <div id="game-container">
-    <div id="active-card" class="card"></div>
+    <div id="card-inner-wrapper" class="card-perspective">
+        <!-- FRONTE DELLA CARTA -->
+        <div id="card-front-el" class="card-front">
+            <!-- Riempito dinamicamente da JS -->
+        </div>
+        <!-- RETRO DELLA CARTA -->
+        <div id="card-back-el" class="card-back">
+            <!-- Riempito dinamicamente da JS -->
+        </div>
+    </div>
 </div>
 
-<div class="controls">
-    <button class="btn" id="btn-reject" onclick="handleSwipe('left')">❌</button>
-    <button class="btn" id="btn-accept" onclick="handleSwipe('right')">❤️</button>
+<!-- Interazioni e Bottoni -->
+<div class="interaction-area">
+    <button class="flip-btn" onclick="toggleFlip()">🔄 Gira la Carta (Ispeziona Clausole)</button>
+    
+    <div class="controls">
+        <button class="btn" id="btn-reject" onclick="handleSwipe('left')">❌</button>
+        <button class="btn" id="btn-accept" onclick="handleSwipe('right')">❤️</button>
+    </div>
 </div>
 
-<p style="font-size: 0.85rem; color: #57606f; margin-top: 20px;">Usa le FRECCE della tastiera (⬅️ / ➡️) come scorciatoia!</p>
+<div id="news-feed"></div>
+
+<p class="shortcuts-tip">Scorciatoie: Freccia ⬅️ Rifiuta | Freccia ➡️ Accetta | Freccia ⬆️ Gira</p>
+
+<!-- OVERLAY MODALE PER GLI IMPREVISTI -->
+<div id="event-overlay">
+    <div class="event-modal">
+        <span id="ev-icon" class="event-icon">🚨</span>
+        <h2 id="ev-title" class="event-title">Titolo Imprevisto</h2>
+        <div id="ev-desc" class="event-desc">Descrizione dell'evento...</div>
+        <div id="ev-effect" class="event-effect">Effetto Finanziario</div>
+        <button class="event-btn" onclick="closeEventModal()">Ho capito</button>
+    </div>
+</div>
 
 <script>
-    // Database delle carte/proposte di finanziamento
-    const carteBanca = [
-        { titolo: "🚗 Prestito Auto Nuova", importo: "15.000€", dettagli: "Rata: 250€/mese<br>Durata: 5 Anni", taeg: "4.5%", conveniente: true },
-        { titolo: "🎓 Prestito Universitario", importo: "5.000€", dettagli: "Rata: 90€/mese<br>Durata: 5 Anni", taeg: "3.2%", conveniente: true },
-        { titolo: "📱 Nuovo Smartphone Top", importo: "1.200€", dettagli: "Rata: 120€/mese<br>Durata: 1 Anno", taeg: "19.8%", conveniente: false }, // TAEG altissimo per un telefono
-        { titolo: "🏠 Anticipo Ristrutturazione", importo: "20.000€", dettagli: "Rata: 380€/mese<br>Durata: 5 Anni", taeg: "5.1%", conveniente: true },
-        { titolo: "💸 Vacanza Last Minute", importo: "3.000€", dettagli: "Rata: 50€/mese<br>Durata: 10 Anni", taeg: "24.5%", conveniente: false }, // Ti indebiti per 10 anni per una vacanza!
-        { titolo: "💻 PC Gaming estremo", importo: "2.500€", dettagli: "Rata: 220€/mese<br>Durata: 1 Anno", taeg: "18.2%", conveniente: false }
+    // DATABASE DELLE OFFERTE DI PRESTITO
+    // Ogni carta ha scopi tracciabili e banche emettitrici differenti
+    const databaseCarte = [
+        {
+            id: "pc_lavoro",
+            titolo: "💻 Notebook Professionale",
+            importo: "1.800€",
+            dettagli: "Rata: 160€/mese<br>Durata: 1 Anno",
+            taeg: "4.2%",
+            isTaegHigh: false,
+            tipoImpegno: "utile",
+            bancaNome: "Banca Sviluppo & Territorio",
+            bancaTipo: "tradizionale",
+            bancaClausola: "Istituto solido. Nessun costo nascosto. Ideale per investimenti produttivi."
+        },
+        {
+            id: "smartphone_top",
+            titolo: "📱 Smartphone Ultra Flagship",
+            importo: "1.400€",
+            dettagli: "Rata: 145€/mese<br>Durata: 1 Anno",
+            taeg: "21.5%",
+            isTaegHigh: true,
+            tipoImpegno: "voluttuario",
+            bancaNome: "Flash-Credit Instant",
+            bancaTipo: "aggressiva",
+            bancaClausola: "ATTENZIONE: Penale del 30% sul debito residuo in caso di minimo ritardo della rata."
+        },
+        {
+            id: "corso_coding",
+            titolo: "🎓 Master Specialistico Tech",
+            importo: "3.500€",
+            dettagli: "Rata: 110€/mese<br>Durata: 3 Anni",
+            taeg: "3.5%",
+            isTaegHigh: false,
+            tipoImpegno: "utile",
+            bancaNome: "Fondo Nazionale Credito Giovani",
+            bancaTipo: "tradizionale",
+            bancaClausola: "Finanziamento agevolato e garantito. Estinguibile senza penali."
+        },
+        {
+            id: "vacanza_lusso",
+            titolo: "🌴 Resort All-Inclusive Bali",
+            importo: "4.000€",
+            dettagli: "Rata: 95€/mese<br>Durata: 5 Anni",
+            taeg: "18.9%",
+            isTaegHigh: true,
+            tipoImpegno: "voluttuario",
+            bancaNome: "EasyPocket Finance",
+            bancaTipo: "aggressiva",
+            bancaClausola: "ATTENZIONE: Interessi capitalizzati mensilmente. Più tempo passa, più aumenta il costo reale."
+        },
+        {
+            id: "auto_usata",
+            titolo: "🚗 Auto Usata Affidabile",
+            importo: "7.000€",
+            dettagli: "Rata: 210€/mese<br>Durata: 3 Anni",
+            taeg: "5.5%",
+            isTaegHigh: false,
+            tipoImpegno: "utile",
+            bancaNome: "Banca Popolare Credit",
+            bancaTipo: "tradizionale",
+            bancaClausola: "Tasso fisso garantito. Include polizza base di protezione del credito in caso di sinistro."
+        },
+        {
+            id: "monopattino_mod",
+            titolo: "🛴 Monopattino Elettrico Tuned",
+            importo: "900€",
+            dettagli: "Rata: 90€/mese<br>Durata: 1 Anno",
+            taeg: "24.1%",
+            isTaegHigh: true,
+            tipoImpegno: "voluttuario",
+            bancaNome: "SharkLoan Digital",
+            bancaTipo: "squalo",
+            bancaClausola: "PERICOLO: Clausola di rivalsa immediata sui tuoi beni se salti una rata. Tasso al limite dell'usura."
+        },
+        {
+            id: "ristrutturazione_casa",
+            titolo: "🏠 Isolamento Termico Stanza",
+            importo: "5.000€",
+            dettagli: "Rata: 150€/mese<br>Durata: 3 Anni",
+            taeg: "4.8%",
+            isTaegHigh: false,
+            tipoImpegno: "utile",
+            bancaNome: "Banca Sviluppo & Territorio",
+            bancaTipo: "tradizionale",
+            bancaClausola: "Prestito green con parziale detrazione fiscale del tasso di interesse."
+        }
     ];
 
-    let punteggio = 0;
-    let sovraindebitamento = 0; // Va da 0 a 100
-    let cartaAttuale = null;
+    // CARTE OBBLIGATORIE DI EMERGENZA (Il giocatore deve sceglierne una forzatamente quando capitano)
+    const emergenzeSpesa = [
+        {
+            id: "emergenza_dentista",
+            titolo: "🦷 Cure Odontoiatriche Urgenti",
+            importo: "2.200€",
+            dettagli: "Opzione A: Rata 200€/mese, TAEG 4.0% (Banca Solida)",
+            taeg: "4.0%",
+            isTaegHigh: false,
+            tipoImpegno: "emergenza_buona",
+            bancaNome: "Banca San Apollonia (Convenzionata)",
+            bancaTipo: "tradizionale",
+            bancaClausola: "Tasso agevolato per spese mediche necessarie."
+        },
+        {
+            id: "emergenza_dentista_squalo",
+            titolo: "🦷 Cure Odontoiatriche Urgenti",
+            importo: "2.200€",
+            dettagli: "Opzione B: Rata 90€/mese, TAEG 26% (Finanziaria Rapida)",
+            taeg: "26.0%",
+            isTaegHigh: true,
+            tipoImpegno: "emergenza_cattiva",
+            bancaNome: "PrestiSubito 24h",
+            bancaTipo: "squalo",
+            bancaClausola: "Nessun controllo sul reddito, approvazione in 5 minuti, ma interessi strangolanti."
+        }
+    ];
+
+    // STATO DEL GIOCO
+    let meseAttuale = 1;
+    let maxMesi = 12; // Sopravvivi 1 anno per vincere
+    let sovraindebitamento = 10; // Parte da un 10% di base
+    let prestitiAttivi = []; // Array degli ID dei prestiti accettati
+    let cartaCorrente = null;
     let inAnimazione = false;
+    let eFlipped = false;
+    let isForcedTurn = false;
+    let mazzoEmergenzaCorrente = [];
 
-    function generaCarta() {
-        if (punteggio >= 5) {
-            alert("Vittoria! Hai selezionato i prestiti migliori sul mercato senza indebitarti troppo!");
-            resetGioco();
-            return;
-        }
+    // FUNZIONE DI INIZIALIZZAZIONE / GENERAZIONE CARTA
+    function generaNuovaCarta() {
+        // Controllo Condizioni di Fine Gioco
         if (sovraindebitamento >= 100) {
-            alert("Game Over! Sei finito in sovraindebitamento. Le rate dei prestiti sbagliati hanno superato le tue entrate!");
-            resetGioco();
+            mostraImprevisto("💥 GAME OVER", "La barra del sovraindebitamento è esplosa al 100%! Le rate mensili hanno superato completamente le tue entrate disponibili. Sei andato in bancarotta finanziaria.", "EFFETTO: Fallimento Economico", false, () => { resetGioco(); });
             return;
         }
 
-        // Prende una carta casuale dal database
-        cartaAttuale = carteBanca[Math.floor(Math.random() * carteBanca.length)];
-        
-        const cardEl = document.getElementById("active-card");
-        cardEl.className = "card"; // Reset delle classi di swipe
-        
-        // Colore del testo del TAEG dinamico in base al pericolo per confondere il giocatore
-        const taegClasse = parseFloat(cartaAttuale.taeg) > 10 ? "taeg" : "taeg safe-taeg";
+        if (meseAttuale > maxMesi) {
+            mostraImprevisto("🏆 VITTORIA FINALE!", "Congratulazioni! Sei riuscito a navigare nel labirinto del credito per un intero anno (12 mesi) gestendo gli imprevisti senza fallire! Hai dimostrato ottime capacità di analisi finanziaria.", "EFFETTO: Campione di Educazione Finanziaria", true, () => { resetGioco(); });
+            return;
+        }
 
-        cardEl.innerHTML = `
-            <div>
-                <h3>${cartaAttuale.titolo}</h3>
-                <div class="amount">${cartaAttuale.importo}</div>
+        // Reset dello stato visivo del flip
+        const wrapper = document.getElementById("card-inner-wrapper");
+        wrapper.className = "card-perspective";
+        eFlipped = false;
+
+        // Gestione della meccanica del Turno Obbligatorio (Es: ogni 4 mesi capita un bivio d'emergenza)
+        const badge = document.getElementById("turn-badge");
+        if (meseAttuale % 4 === 0 && mazzoEmergenzaCorrente.length === 0) {
+            isForcedTurn = true;
+            badge.innerText = "🚨 TURNO OBBLIGATORIO: Spesa Medica Improvvisa!";
+            badge.className = "badge-forced";
+            // Carica la coppia di carte di emergenza per far scegliere al giocatore il male minore
+            mazzoEmergenzaCorrente = [...emergenzeSpesa];
+            document.getElementById("news-feed").innerText = "Devi scegliere OBBLIGATORIAMENTE uno dei due piani!";
+        }
+
+        if (isForcedTurn && mazzoEmergenzaCorrente.length > 0) {
+            // Estrae una delle opzioni di emergenza
+            cartaCorrente = mazzoEmergenzaCorrente.pop();
+        } else {
+            // Turno Normale: Prende una carta casuale dal database standard
+            isForcedTurn = false;
+            badge.innerText = "Turno Ordinario";
+            badge.className = "badge-normal";
+            cartaCorrente = databaseCarte[Math.floor(Math.random() * databaseCarte.length)];
+        }
+
+        // AGGIORNA IL FRONTE DELLA CARTA
+        const frontEl = document.getElementById("card-front-el");
+        const taegClass = cartaCorrente.isTaegHigh ? "taeg-box" : "taeg-box taeg-safe";
+        
+        let avvisoFront = isForcedTurn ? 
+            `<div style="font-size:0.85rem; color:#ff4757; font-weight:bold; margin-top:5px;">Spesa inevitabile! Se rifiuti questa opzione, sarai costretto a valutare la successiva!</div>` : 
+            `<div style="font-size:0.8rem; color:#718093;">Consiglio: Gira la carta per studiare chi emette il finanziamento!</div>`;
+
+        frontEl.innerHTML = `
+            <div class="card-header">
+                <h3 class="card-title">${cartaCorrente.titolo}</h3>
+                <div class="card-amount">${cartaCorrente.importo}</div>
             </div>
-            <div class="details">
-                ${cartaAttuale.dettagli}
-                <div class="${taegClasse}">TAEG: ${cartaAttuale.taeg}</div>
+            <div class="card-body">
+                ${cartaCorrente.dettagli}
+                <div class="${taegClass}">TAEG: ${cartaCorrente.taeg}</div>
             </div>
-            <div style="font-size:0.8rem; color:#718093;">Guarda bene il TAEG prima di scegliere!</div>
+            ${avvisoFront}
         `;
+
+        // AGGIORNA IL RETRO DELLA CARTA
+        const backEl = document.getElementById("card-back-el");
+        const bankClass = (cartaCorrente.bancaTipo === "tradizionale") ? "clause-box safe-bank" : "clause-box";
+        let iconaBanca = (cartaCorrente.bancaTipo === "tradizionale") ? "🏛️" : "🦈";
+
+        backEl.innerHTML = `
+            <div>
+                <span class="bank-info-title">Istituto Emittente ${iconaBanca}</span>
+                <div class="bank-name">${cartaCorrente.bancaNome}</div>
+                <p style="font-size:0.9rem; color:var(--text-muted);">Profilo Rischio: <strong style="color:#ff9f43;">${cartaCorrente.bancaTipo.toUpperCase()}</strong></p>
+            </div>
+            <div class="${bankClass}">
+                <strong>Clausole e Note:</strong><br>
+                ${cartaCorrente.bancaClausola}
+            </div>
+            <div class="card-footer-tip">Usa i pulsanti sotto o le frecce per decidere</div>
+        `;
+
+        // Aggiorna la dashboard dei dati
+        document.getElementById("month-txt").innerText = `Mese ${meseAttuale} / ${maxMesi}`;
+        document.getElementById("active-loans-txt").innerText = prestitiAttivi.length;
+        document.getElementById("debt-pct-txt").innerText = `${sovraindebitamento}%`;
+        document.getElementById("debt-bar").style.width = `${Math.min(100, sovraindebitamento)}%`;
     }
 
+    // FUNZIONE PER GIRARE LA CARTA
+    function toggleFlip() {
+        const wrapper = document.getElementById("card-inner-wrapper");
+        if (!eFlipped) {
+            wrapper.classList.add("flipped");
+            eFlipped = true;
+        } else {
+            wrapper.classList.remove("flipped");
+            eFlipped = false;
+        }
+    }
+
+    // LOGICA DI SWIPE (DESTRA = ACCETTA, SINISTRA = RIFIUTA)
     function handleSwipe(direzione) {
         if (inAnimazione) return;
         inAnimazione = true;
 
-        const cardEl = document.getElementById("active-card");
-        
+        const wrapper = document.getElementById("card-inner-wrapper");
+        document.getElementById("news-feed").innerText = ""; // pulisce feed rapido
+
         if (direzione === 'left') {
-            cardEl.classList.add('swipe-left');
-            // SE RIFIUTI (Swipe sinistra):
-            if (cartaAttuale.conveniente === false) {
-                // Hai fatto bene a rifiutare una truffa!
-                punteggio++; 
+            // RIFIUTA IL PRESTITO
+            wrapper.classList.add('swipe-left-anim');
+            
+            if (isForcedTurn) {
+                // Se è un turno obbligatorio e rifiuti la prima opzione di emergenza...
+                if (mazzoEmergenzaCorrente.length > 0) {
+                    document.getElementById("news-feed").innerText = "Hai scartato la prima opzione. Ora DEVI valutare l'alternativa!";
+                } else {
+                    // Se rifiuti anche l'ultima opzione di emergenza, vieni punito pesantemente perché la spesa medica va pagata comunque!
+                    sovraindebitamento += 35;
+                    document.getElementById("news-feed").innerText = "Non puoi rifiutare le cure! Pagato con debito d'emergenza forzato (+35% Debito).";
+                    isForcedTurn = false;
+                }
             } else {
-                // Hai rifiutato un buon prestito, nessun danno grave ma non fai punti
+                // Turno normale: rifiutare un debito voluttuario/tossico è positivo!
+                if (cartaCorrente.tipoImpegno === "voluttuario") {
+                    // Ottimo, evitato debito inutile. Piccola riduzione del debito generale se stavi risparmiando
+                    sovraindebitamento = Math.max(0, sovraindebitamento - 3);
+                }
+                // Se rifiuti un prestito utile (es. pc per lavorare), non hai penalità dirette subito, ma l'imprevisto futuro potrebbe tenerne conto!
             }
+
         } else if (direzione === 'right') {
-            cardEl.classList.add('swipe-right');
-            // SE ACCETTI (Swipe destra):
-            if (cartaAttuale.conveniente === true) {
-                // Ottimo affare preso!
-                punteggio++;
-                sovraindebitamento += 15; // Un buon debito sostenibile alza un po' la barra
-            } else {
-                // Hai accettato un prestito tossico! Penalità grave sul debito
-                sovraindebitamento += 45; 
+            // ACCETTA IL PRESTITO
+            wrapper.classList.add('swipe-right-anim');
+            
+            // Traccia il prestito accettato nel portfolio del giocatore
+            prestitiAttivi.push(cartaCorrente.id);
+
+            // Calcolo impatto immediato sul debito
+            if (cartaCorrente.tipoImpegno === "utile") {
+                sovraindebitamento += 12; // Debito controllato e sostenibile
+            } else if (cartaCorrente.tipoImpegno === "voluttuario") {
+                // I debiti voluttuari ad alto TAEG pesano un'esagerazione
+                let moltiplicatore = (cartaCorrente.bancaTipo === "squalo" || cartaCorrente.bancaTipo === "aggressiva") ? 30 : 18;
+                sovraindebitamento += moltiplicatore;
+            } else if (cartaCorrente.tipoImpegno.startsWith("emergenza")) {
+                // Spese mediche obbligatorie
+                let peso = (cartaCorrente.tipoImpegno === "emergenza_cattiva") ? 40 : 15;
+                sovraindebitamento += peso;
+                // Svuota il mazzo d'emergenza perché ha accettato la soluzione
+                mazzoEmergenzaCorrente = [];
+                isForcedTurn = false;
             }
         }
 
-        // Aggiorna la grafica dopo il volo della carta
+        // Attendi la fine dell'animazione del volo della carta
         setTimeout(() => {
-            document.getElementById("score-txt").innerText = punteggio;
-            document.getElementById("debt-bar").style.width = Math.min(100, sovraindebitamento) + "%";
+            wrapper.className = "card-perspective"; // Reset posizioni fisiche
+            meseAttuale++; // Avanza il mese globale
             inAnimazione = false;
-            generaCarta();
-        }, 350); // Tempo allineato all'animazione CSS
+            
+            // CONTROLLO ATTIVAZIONE DEGLI IMPREVISTI / EVENTI DI VITA (Ogni 3 mesi, se non siamo a fine gioco)
+            if ((meseAttuale - 1) % 3 === 0 && meseAttuale <= maxMesi && !isForcedTurn) {
+                eseguiImprevistoDinamico();
+            } else {
+                generaNuovaCarta();
+            }
+        }, 400);
     }
 
+    // MECCANICA DEGLI IMPREVISTI COLLEGATI (PUNTO 2 E RICHIESTA UTENTE)
+    // Sfrutta l'array dei prestiti attivi per determinare se una scelta passata è stata fortunata o tossica
+    function eseguiImprevistoDinamico() {
+        // Cerca se l'utente ha fatto determinate scelte
+        const haNotebook = prestitiAttivi.includes("pc_lavoro");
+        const haMaster = prestitiAttivi.includes("corso_coding");
+        const haSmartphoneTossico = prestitiAttivi.includes("smartphone_top");
+        const haVacanzaBali = prestitiAttivi.includes("vacanza_lusso");
+        const haMonopattinoTossico = prestitiAttivi.includes("monopattino_mod");
+
+        // Elenco imprevisti possibili da filtrare in base alla storia del giocatore
+        let opzioniEvento = [];
+
+        // 1. Caso Fortunato: Ha comprato il PC da lavoro o fatto il Master
+        if (haNotebook || haMaster) {
+            opzioniEvento.push({
+                icon: "🚀",
+                title: "PROMOZIONE PROFESSIONALE!",
+                desc: "Le tue nuove competenze digitali e tecnologiche hanno fatto colpo sul capo! Grazie agli strumenti acquistati o al corso seguito, hai ottenuto un avanzamento di carriera immediato.",
+                effect: "EFFETTO: Le tue maggiori entrate abbattono il debito complessivo! (-25% Sovraindebitamento)",
+                action: () => {
+                    sovraindebitamento = Math.max(0, sovraindebitamento - 25);
+                    generaNuovaCarta();
+                }
+            });
+        }
+
+        // 2. Caso Sfortunato/Tossico: Ha preso lo smartphone o il monopattino con clausole folli
+        if (haSmartphoneTossico || haMonopattinoTossico) {
+            opzioniEvento.push({
+                icon: "🦈",
+                title: "CLAUSOLA RECESSIVA ATTIVATA!",
+                desc: "Hai presente la finanziaria aggressiva a cui ti sei affidato per i beni di consumo? Hanno modificato unilateralmente i costi di gestione del conto a causa dell'inflazione, applicando la penale nascosta sul retro del contratto!",
+                effect: "EFFETTO: Il costo reale del tuo debito schizza verso l'alto! (+20% Sovraindebitamento)",
+                action: () => {
+                    sovraindebitamento += 20;
+                    generaNuovaCarta();
+                }
+            });
+        }
+
+        // 3. Caso Mancato Investimento: Se NON ha preso l'auto usata quando è apparsa
+        if (!prestitiAttivi.includes("auto_usata")) {
+            opzioniEvento.push({
+                icon: "🏃‍♂️",
+                title: "PROBLEMI DI TRASPORTO",
+                desc: "Non avendo un mezzo di trasporto affidabile, sei arrivato tardi a un colloquio fondamentale per una consulenza extra ben pagata. Hai perso l'opportunità economica dell'anno.",
+                effect: "EFFETTO: Spese di trasporto pubblico d'emergenza e mancati guadagni pesano sul budget. (+15% Sovraindebitamento)",
+                action: () => {
+                    sovraindebitamento += 15;
+                    generaNuovaCarta();
+                }
+            });
+        }
+
+        // 4. Imprevisto Neutro/Generico di vita se non si attivano i precedenti
+        opzioniEvento.push({
+            icon: "🔧",
+            title: "GUASTO CASALINGO",
+            desc: "La lavatrice ha deciso di abbandonarti allagando il bagno. È una spesa imprevista immediata e non programmabile.",
+            effect: "EFFETTO: Devi attingere a microcrediti d'urgenza. (+10% Sovraindebitamento)",
+            action: () => {
+                sovraindebitamento += 10;
+                generaNuovaCarta();
+            }
+        });
+
+        // Prende uno degli eventi validi emersi dalla storia del giocatore
+        // Diamo priorità agli eventi collegati alle scelte reali se esistono
+        let eventoSelezionato = opzioniEvento[0]; 
+        if (opzioniEvento.length > 1 && Math.random() > 0.3) {
+            // Pesca casualmente tra quelli disponibili per dare varietà
+            eventoSelezionato = opzioniEvento[Math.floor(Math.random() * (opzioniEvento.length - 1))];
+        }
+
+        // Lancia il modale visivo
+        mostraImprevisto(eventoSelezionato.title, eventoSelezionato.desc, eventoSelezionato.effect, eventoSelezionato.title.includes("PROMOZIONE"), eventoSelezionato.action);
+    }
+
+    // GESTIONE DELLA FINESTRA MODALE DEGLI IMPREVISTI
+    let callbackCorrenteModale = null;
+
+    function mostraImprevisto(titolo, descrizione, effetto, isGood, onConfirm) {
+        document.getElementById("ev-title").innerText = titolo;
+        document.getElementById("ev-desc").innerText = descrizione;
+        document.getElementById("ev-effect").innerText = effetto;
+        
+        const effectEl = document.getElementById("ev-effect");
+        if (isGood) {
+            effectEl.className = "event-effect effect-good";
+            document.getElementById("ev-icon").innerText = "🎉";
+        } else {
+            effectEl.className = "event-effect effect-bad";
+            document.getElementById("ev-icon").innerText = "🚨";
+        }
+
+        if (titolo.includes("VITTORIA")) document.getElementById("ev-icon").innerText = "👑";
+        if (titolo.includes("OVER")) document.getElementById("ev-icon").innerText = "💀";
+
+        callbackCorrenteModale = onConfirm;
+        document.getElementById("event-overlay").classList.add("active");
+    }
+
+    function closeEventModal() {
+        document.getElementById("event-overlay").classList.remove("active");
+        if (callbackCorrenteModale) {
+            callbackCorrenteModale();
+        }
+    }
+
+    // RESET DEL GIOCO IN CASO DI FINISH
     function resetGioco() {
-        punteggio = 0;
-        sovraindebitamento = 0;
-        document.getElementById("score-txt").innerText = punteggio;
-        document.getElementById("debt-bar").style.width = "0%";
-        generaCarta();
+        meseAttuale = 1;
+        sovraindebitamento = 10;
+        prestitiAttivi = [];
+        mazzoEmergenzaCorrente = [];
+        isForcedTurn = false;
+        generaNuovaCarta();
     }
 
-    // Controlli da tastiera
+    // CONTROLLI VELOCI DA TASTIERA (AGGIUNTI PER COMODITÀ DI SVILUPPO)
     window.addEventListener('keydown', function(e) {
+        if (document.getElementById("event-overlay").classList.contains("active")) {
+            if (e.key === "Enter" || e.key === " ") {
+                closeEventModal();
+            }
+            return;
+        }
         if (e.key === "ArrowLeft") handleSwipe('left');
         if (e.key === "ArrowRight") handleSwipe('right');
+        if (e.key === "ArrowUp") toggleFlip();
     });
 
-    // Avvio del gioco
-    generaCarta();
+    // AVVIO DEL MINIGIOCO
+    generaNuovaCarta();
 </script>
 
 </body>
