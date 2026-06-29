@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DebtMatch v2 - Il Labirinto del Credito</title>
+    <title>DebtMatch - Il Labirinto del Credito</title>
     <style>
         :root {
             --bg-color: #0f0f13;
@@ -93,7 +93,7 @@
             transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* Notifiche Tipo Turno (es. Turno Obbligatorio) */
+        /* Notifiche Tipo Turno */
         #turn-badge {
             background: #2f3542;
             padding: 4px 10px;
@@ -195,7 +195,7 @@
             font-style: italic;
         }
 
-        /* Contenuto Retro Carta (Dettagli Istituto) */
+        /* Contenuto Retro Carta */
         .bank-info-title {
             color: var(--accent);
             font-size: 1.1rem;
@@ -224,7 +224,7 @@
             border-left-color: var(--success);
         }
 
-        /* Classi Animazione Swipe (Volo via) */
+        /* Classi Animazione Swipe */
         .swipe-left-anim { transform: translate(-200%, 30px) rotate(-40deg) !important; opacity: 0; transition: all 0.4s ease; }
         .swipe-right-anim { transform: translate(200%, 30px) rotate(40deg) !important; opacity: 0; transition: all 0.4s ease; }
 
@@ -277,13 +277,7 @@
         #btn-reject { background: var(--danger); color: white; box-shadow: 0 0 15px rgba(255, 71, 87, 0.3); }
         #btn-accept { background: var(--success); color: white; box-shadow: 0 0 15px rgba(46, 213, 115, 0.3); }
 
-        .shortcuts-tip {
-            font-size: 0.8rem;
-            color: #57606f;
-            margin-top: 12px;
-        }
-
-        /* MODALE EVENTI / IMPREVISTI OVERLAY */
+        /* MODALE OVERLAY */
         #event-overlay {
             position: fixed;
             top: 0;
@@ -363,8 +357,13 @@
             transition: transform 0.1s;
         }
         .event-btn:active { transform: scale(0.95); }
+        
+        .event-btn.exit-style {
+            background: linear-gradient(90deg, #ff4757, #ff6b81);
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
+        }
 
-        /* Log Notifiche Rapide in basso */
         #news-feed {
             width: 340px;
             text-align: center;
@@ -385,11 +384,10 @@
 <body>
 
 <div class="header-section">
-    <h1>🏦 DebtMatch v2</h1>
+    <h1>🏦 DebtMatch</h1>
     <p>Pianifica i tuoi debiti e sopravvivi alle prove della vita!</p>
 </div>
 
-<!-- Cruscotto di gioco -->
 <div id="dashboard">
     <div class="stats-row">
         <div><span class="stat-label">Progresso:</span> <span id="month-txt">Mese 1 / 12</span></div>
@@ -408,21 +406,13 @@
 
 <div id="turn-badge" class="badge-normal">Turno Ordinario</div>
 
-<!-- Spazio della Carta Interattiva -->
 <div id="game-container">
     <div id="card-inner-wrapper" class="card-perspective">
-        <!-- FRONTE DELLA CARTA -->
-        <div id="card-front-el" class="card-front">
-            <!-- Riempito dinamicamente da JS -->
-        </div>
-        <!-- RETRO DELLA CARTA -->
-        <div id="card-back-el" class="card-back">
-            <!-- Riempito dinamicamente da JS -->
-        </div>
+        <div id="card-front-el" class="card-front"></div>
+        <div id="card-back-el" class="card-back"></div>
     </div>
 </div>
 
-<!-- Interazioni e Bottoni -->
 <div class="interaction-area">
     <button class="flip-btn" onclick="toggleFlip()">🔄 Gira la Carta (Ispeziona Clausole)</button>
     
@@ -434,9 +424,6 @@
 
 <div id="news-feed"></div>
 
-<p class="shortcuts-tip">Scorciatoie: Freccia ⬅️ Rifiuta | Freccia ➡️ Accetta | Freccia ⬆️ Gira</p>
-
-<!-- OVERLAY MODALE PER GLI IMPREVISTI -->
 <div id="event-overlay">
     <div class="event-modal">
         <span id="ev-icon" class="event-icon">🚨</span>
@@ -448,8 +435,7 @@
 </div>
 
 <script>
-    // DATABASE DELLE OFFERTE DI PRESTITO
-    // Ogni carta ha scopi tracciabili e banche emettitrici differenti
+    // DATABASE ESTESO (14 CARTE) PER IMPORTANTE VARIETÀ DI GIOCO
     const databaseCarte = [
         {
             id: "pc_lavoro",
@@ -509,7 +495,7 @@
             tipoImpegno: "utile",
             bancaNome: "Banca Popolare Credit",
             bancaTipo: "tradizionale",
-            bancaClausola: "Tasso fisso garantito. Include polizza base di protezione del credito in caso di sinistro."
+            bancaClausola: "Tasso fisso garantito. Include polizza base di protezione del credito."
         },
         {
             id: "monopattino_mod",
@@ -521,7 +507,7 @@
             tipoImpegno: "voluttuario",
             bancaNome: "SharkLoan Digital",
             bancaTipo: "squalo",
-            bancaClausola: "PERICOLO: Clausola di rivalsa immediata sui tuoi beni se salti una rata. Tasso al limite dell'usura."
+            bancaClausola: "PERICOLO: Clausola di rivalsa immediata sui tuoi beni se salti una rata. Tasso limite usura."
         },
         {
             id: "ristrutturazione_casa",
@@ -534,82 +520,153 @@
             bancaNome: "Banca Sviluppo & Territorio",
             bancaTipo: "tradizionale",
             bancaClausola: "Prestito green con parziale detrazione fiscale del tasso di interesse."
-        }
-    ];
-
-    // CARTE OBBLIGATORIE DI EMERGENZA (Il giocatore deve sceglierne una forzatamente quando capitano)
-    const emergenzeSpesa = [
-        {
-            id: "emergenza_dentista",
-            titolo: "🦷 Cure Odontoiatriche Urgenti",
-            importo: "2.200€",
-            dettagli: "Opzione A: Rata 200€/mese, TAEG 4.0% (Banca Solida)",
-            taeg: "4.0%",
-            isTaegHigh: false,
-            tipoImpegno: "emergenza_buona",
-            bancaNome: "Banca San Apollonia (Convenzionata)",
-            bancaTipo: "tradizionale",
-            bancaClausola: "Tasso agevolato per spese mediche necessarie."
         },
         {
-            id: "emergenza_dentista_squalo",
-            titolo: "🦷 Cure Odontoiatriche Urgenti",
-            importo: "2.200€",
-            dettagli: "Opzione B: Rata 90€/mese, TAEG 26% (Finanziaria Rapida)",
-            taeg: "26.0%",
+            id: "consolle_nextgen",
+            titolo: "🎮 Consolle Gaming Ultra Pack",
+            importo: "800€",
+            dettagli: "Rata: 75€/mese<br>Durata: 1 Anno",
+            taeg: "22.5%",
             isTaegHigh: true,
-            tipoImpegno: "emergenza_cattiva",
-            bancaNome: "PrestiSubito 24h",
+            tipoImpegno: "voluttuario",
+            bancaNome: "PlayFast Credit",
+            bancaTipo: "aggressiva",
+            bancaClausola: "Costi di istruttoria nascosti nel computo finale delle rate mensili."
+        },
+        {
+            id: "bici_elettrica",
+            titolo: "🚲 E-Bike per Pendolari",
+            importo: "1.600€",
+            dettagli: "Rata: 70€/mese<br>Durata: 2 Anni",
+            taeg: "3.8%",
+            isTaegHigh: false,
+            tipoImpegno: "utile",
+            bancaNome: "Fondo Mobilità Green",
+            bancaTipo: "tradizionale",
+            bancaClausola: "Finanziamento agevolato a tasso promozionale per la transizione ecologica."
+        },
+        {
+            id: "impianto_audio",
+            titolo: "🔊 Impianto Stereo Custom",
+            importo: "2.500€",
+            dettagli: "Rata: 130€/mese<br>Durata: 2 Anni",
+            taeg: "25.0%",
+            isTaegHigh: true,
+            tipoImpegno: "voluttuario",
+            bancaNome: "SharkLoan Digital",
             bancaTipo: "squalo",
-            bancaClausola: "Nessun controllo sul reddito, approvazione in 5 minuti, ma interessi strangolanti."
+            bancaClausola: "Clausole vessatorie con capitalizzazione degli interessi ad ogni trimestre."
+        },
+        {
+            id: "corso_guida",
+            titolo: "🏁 Corso Guida Sicura Avanzato",
+            importo: "1.200€",
+            dettagli: "Rata: 105€/mese<br>Durata: 1 Anno",
+            taeg: "4.5%",
+            isTaegHigh: false,
+            tipoImpegno: "utile",
+            bancaNome: "Banca Popolare Credit",
+            bancaTipo: "tradizionale",
+            bancaClausola: "Tasso base trasparente senza polizze assicurative aggiuntive obbligatorie."
+        },
+        {
+            id: "palestra_vip",
+            titolo: "💪 Abbonamento VIP Open Spa",
+            importo: "2.000€",
+            dettagli: "Rata: 95€/mese<br>Durata: 2 Anni",
+            taeg: "19.5%",
+            isTaegHigh: true,
+            tipoImpegno: "voluttuario",
+            bancaNome: "EasyPocket Finance",
+            bancaTipo: "aggressiva",
+            bancaClausola: "Risoluzione anticipata del contratto bloccata. Paghi tutto anche se smetti di andare."
+        },
+        {
+            id: "arredo_rgb",
+            titolo: "💺 Set Scrivania e Sedia Gaming",
+            importo: "1.100€",
+            dettagli: "Rata: 100€/mese<br>Durata: 1 Anno",
+            taeg: "21.0%",
+            isTaegHigh: true,
+            tipoImpegno: "voluttuario",
+            bancaNome: "Flash-Credit Instant",
+            bancaTipo: "aggressiva",
+            bancaClausola: "Interessi di mora elevatissimi calcolati su base giornaliera in caso di ritardi."
+        },
+        {
+            id: "pannelli_balcone",
+            titolo: "☀️ Kit Solare da Balcone",
+            importo: "1.500€",
+            dettagli: "Rata: 65€/mese<br>Durata: 2 Anni",
+            taeg: "4.0%",
+            isTaegHigh: false,
+            tipoImpegno: "utile",
+            bancaNome: "Banca Sviluppo & Territorio",
+            bancaTipo: "tradizionale",
+            bancaClausola: "Credito agevolato. Permette l'abbattimento immediato dei costi in bolletta."
         }
     ];
 
     // STATO DEL GIOCO
     let meseAttuale = 1;
-    let maxMesi = 12; // Sopravvivi 1 anno per vincere
-    let sovraindebitamento = 10; // Parte da un 10% di base
-    let prestitiAttivi = []; // Array degli ID dei prestiti accettati
+    let maxMesi = 12; 
+    let sovraindebitamento = 10; 
+    let prestitiAttivi = []; 
     let cartaCorrente = null;
     let inAnimazione = false;
     let eFlipped = false;
     let isForcedTurn = false;
-    let mazzoEmergenzaCorrente = [];
 
-    // FUNZIONE DI INIZIALIZZAZIONE / GENERAZIONE CARTA
     function generaNuovaCarta() {
-        // Controllo Condizioni di Fine Gioco
         if (sovraindebitamento >= 100) {
-            mostraImprevisto("💥 GAME OVER", "La barra del sovraindebitamento è esplosa al 100%! Le rate mensili hanno superato completamente le tue entrate disponibili. Sei andato in bancarotta finanziaria.", "EFFETTO: Fallimento Economico", false, () => { resetGioco(); });
+            mostraImprevisto(
+                "💥 GAME OVER", 
+                "La barra del sovraindebitamento è esplosa al 100%! Le rate mensili hanno superato completamente le tue entrate disponibili. Sei andato in bancarotta finanziaria.", 
+                "EFFETTO: Fallimento Economico", 
+                false, 
+                null, 
+                true
+            );
             return;
         }
 
         if (meseAttuale > maxMesi) {
-            mostraImprevisto("🏆 VITTORIA FINALE!", "Congratulazioni! Sei riuscito a navigare nel labirinto del credito per un intero anno (12 mesi) gestendo gli imprevisti senza fallire! Hai dimostrato ottime capacità di analisi finanziaria.", "EFFETTO: Campione di Educazione Finanziaria", true, () => { resetGioco(); });
+            mostraImprevisto(
+                "🏆 VITTORIA FINALE!", 
+                "Congratulazioni! Sei riuscito a navigare nel labirinto del credito per un intero anno (12 mesi) gestendo gli imprevisti senza fallire!", 
+                "EFFETTO: Campione di Educazione Finanziaria", 
+                true, 
+                null, 
+                true
+            );
             return;
         }
 
-        // Reset dello stato visivo del flip
         const wrapper = document.getElementById("card-inner-wrapper");
         wrapper.className = "card-perspective";
         eFlipped = false;
 
-        // Gestione della meccanica del Turno Obbligatorio (Es: ogni 4 mesi capita un bivio d'emergenza)
         const badge = document.getElementById("turn-badge");
-        if (meseAttuale % 4 === 0 && mazzoEmergenzaCorrente.length === 0) {
+        
+        // NUOVA LOGICA DENTI AL MESE 4 (STRUTTURATA COME SCELTA INTELLIGENTE)
+        if (meseAttuale === 4) {
             isForcedTurn = true;
-            badge.innerText = "🚨 TURNO OBBLIGATORIO: Spesa Medica Improvvisa!";
+            badge.innerText = "🚨 EMERGENZA SPESA MEDICA!";
             badge.className = "badge-forced";
-            // Carica la coppia di carte di emergenza per far scegliere al giocatore il male minore
-            mazzoEmergenzaCorrente = [...emergenzeSpesa];
-            document.getElementById("news-feed").innerText = "Devi scegliere OBBLIGATORIAMENTE uno dei due piani!";
-        }
-
-        if (isForcedTurn && mazzoEmergenzaCorrente.length > 0) {
-            // Estrae una delle opzioni di emergenza
-            cartaCorrente = mazzoEmergenzaCorrente.pop();
+            
+            cartaCorrente = {
+                id: "emergenza_dentista",
+                titolo: "🦷 Cure Odontoiatriche Urgenti",
+                importo: "2.200€",
+                dettagli: "Dolore insopportabile! Devi operarti subito.<br><br>❤️ <b>Destra:</b> Finanziamento Banca Solida (Tasso onesto)<br>❌ <b>Sinistra:</b> Ignora... (Strozzini a fine mese)",
+                taeg: "Vedi Retro",
+                isTaegHigh: false,
+                tipoImpegno: "emergenza_bivio",
+                bancaNome: "Bivio di Gestione Emergenze",
+                bancaTipo: "tradizionale",
+                bancaClausola: "Le emergenze non si rifiutano. Se fai Swipe a Destra scegli la pianificazione sicura (+15% debito). Se fai Swipe a Sinistra rimandi il dolore e pagherai la Finanziaria Squalo (+40% debito pesante)."
+            };
         } else {
-            // Turno Normale: Prende una carta casuale dal database standard
             isForcedTurn = false;
             badge.innerText = "Turno Ordinario";
             badge.className = "badge-normal";
@@ -621,7 +678,7 @@
         const taegClass = cartaCorrente.isTaegHigh ? "taeg-box" : "taeg-box taeg-safe";
         
         let avvisoFront = isForcedTurn ? 
-            `<div style="font-size:0.85rem; color:#ff4757; font-weight:bold; margin-top:5px;">Spesa inevitabile! Se rifiuti questa opzione, sarai costretto a valutare la successiva!</div>` : 
+            `<div style="font-size:0.85rem; color:#ff4757; font-weight:bold; margin-top:5px;">Scelta obbligatoria: valuta bene l'impatto distruttivo dello Squalo!</div>` : 
             `<div style="font-size:0.8rem; color:#718093;">Consiglio: Gira la carta per studiare chi emette il finanziamento!</div>`;
 
         frontEl.innerHTML = `
@@ -651,17 +708,15 @@
                 <strong>Clausole e Note:</strong><br>
                 ${cartaCorrente.bancaClausola}
             </div>
-            <div class="card-footer-tip">Usa i pulsanti sotto o le frecce per decidere</div>
+            <div class="card-footer-tip">Usa i pulsanti grafici per decidere lo swipe</div>
         `;
 
-        // Aggiorna la dashboard dei dati
         document.getElementById("month-txt").innerText = `Mese ${meseAttuale} / ${maxMesi}`;
         document.getElementById("active-loans-txt").innerText = prestitiAttivi.length;
         document.getElementById("debt-pct-txt").innerText = `${sovraindebitamento}%`;
         document.getElementById("debt-bar").style.width = `${Math.min(100, sovraindebitamento)}%`;
     }
 
-    // FUNZIONE PER GIRARE LA CARTA
     function toggleFlip() {
         const wrapper = document.getElementById("card-inner-wrapper");
         if (!eFlipped) {
@@ -673,69 +728,56 @@
         }
     }
 
-    // LOGICA DI SWIPE (DESTRA = ACCETTA, SINISTRA = RIFIUTA)
     function handleSwipe(direzione) {
         if (inAnimazione) return;
         inAnimazione = true;
 
         const wrapper = document.getElementById("card-inner-wrapper");
-        document.getElementById("news-feed").innerText = ""; // pulisce feed rapido
+        document.getElementById("news-feed").innerText = ""; 
 
-        if (direzione === 'left') {
-            // RIFIUTA IL PRESTITO
-            wrapper.classList.add('swipe-left-anim');
-            
-            if (isForcedTurn) {
-                // Se è un turno obbligatorio e rifiuti la prima opzione di emergenza...
-                if (mazzoEmergenzaCorrente.length > 0) {
-                    document.getElementById("news-feed").innerText = "Hai scartato la prima opzione. Ora DEVI valutare l'alternativa!";
-                } else {
-                    // Se rifiuti anche l'ultima opzione di emergenza, vieni punito pesantemente perché la spesa medica va pagata comunque!
-                    sovraindebitamento += 35;
-                    document.getElementById("news-feed").innerText = "Non puoi rifiutare le cure! Pagato con debito d'emergenza forzato (+35% Debito).";
-                    isForcedTurn = false;
-                }
+        // GESTIONE NUOVO BIVIO DENTISTA
+        if (cartaCorrente.tipoImpegno === "emergenza_bivio") {
+            if (direzione === 'right') {
+                wrapper.classList.add('swipe-right-anim');
+                sovraindebitamento += 15;
+                prestitiAttivi.push("dentista_banca");
+                document.getElementById("news-feed").innerText = "Cura affrontata con Banca Solida! Tasso protetto (+15% Debito).";
             } else {
-                // Turno normale: rifiutare un debito voluttuario/tossico è positivo!
-                if (cartaCorrente.tipoImpegno === "voluttuario") {
-                    // Ottimo, evitato debito inutile. Piccola riduzione del debito generale se stavi risparmiando
-                    sovraindebitamento = Math.max(0, sovraindebitamento - 3);
-                }
-                // Se rifiuti un prestito utile (es. pc per lavorare), non hai penalità dirette subito, ma l'imprevisto futuro potrebbe tenerne conto!
+                wrapper.classList.add('swipe-left-anim');
+                sovraindebitamento += 40;
+                prestitiAttivi.push("dentista_squalo");
+                document.getElementById("news-feed").innerText = "Infezione peggiorata! Ceduto alla Finanziaria Squalo in extremis (+40% Debito!).";
             }
+            isForcedTurn = false;
+        } else {
+            // LOGICA TURNO ORDINARIO
+            if (direzione === 'left') {
+                wrapper.classList.add('swipe-left-anim');
+                if (cartaCorrente.tipoImpegno === "voluttuario") {
+                    // Capped a zero, non scende sotto
+                    sovraindebitamento = Math.max(0, sovraindebitamento - 3);
+                    document.getElementById("news-feed").innerText = "Ottimo! Risparmiato debito inutile.";
+                }
+            } else if (direzione === 'right') {
+                wrapper.classList.add('swipe-right-anim');
+                prestitiAttivi.push(cartaCorrente.id);
 
-        } else if (direzione === 'right') {
-            // ACCETTA IL PRESTITO
-            wrapper.classList.add('swipe-right-anim');
-            
-            // Traccia il prestito accettato nel portfolio del giocatore
-            prestitiAttivi.push(cartaCorrente.id);
-
-            // Calcolo impatto immediato sul debito
-            if (cartaCorrente.tipoImpegno === "utile") {
-                sovraindebitamento += 12; // Debito controllato e sostenibile
-            } else if (cartaCorrente.tipoImpegno === "voluttuario") {
-                // I debiti voluttuari ad alto TAEG pesano un'esagerazione
-                let moltiplicatore = (cartaCorrente.bancaTipo === "squalo" || cartaCorrente.bancaTipo === "aggressiva") ? 30 : 18;
-                sovraindebitamento += moltiplicatore;
-            } else if (cartaCorrente.tipoImpegno.startsWith("emergenza")) {
-                // Spese mediche obbligatorie
-                let peso = (cartaCorrente.tipoImpegno === "emergenza_cattiva") ? 40 : 15;
-                sovraindebitamento += peso;
-                // Svuota il mazzo d'emergenza perché ha accettato la soluzione
-                mazzoEmergenzaCorrente = [];
-                isForcedTurn = false;
+                if (cartaCorrente.tipoImpegno === "utile") {
+                    sovraindebitamento += 12;
+                } else if (cartaCorrente.tipoImpegno === "voluttuario") {
+                    let moltiplicatore = (cartaCorrente.bancaTipo === "squalo" || cartaCorrente.bancaTipo === "aggressiva") ? 30 : 18;
+                    sovraindebitamento += moltiplicatore;
+                }
             }
         }
 
-        // Attendi la fine dell'animazione del volo della carta
         setTimeout(() => {
-            wrapper.className = "card-perspective"; // Reset posizioni fisiche
-            meseAttuale++; // Avanza il mese globale
+            wrapper.className = "card-perspective"; 
+            meseAttuale++; 
             inAnimazione = false;
             
-            // CONTROLLO ATTIVAZIONE DEGLI IMPREVISTI / EVENTI DI VITA (Ogni 3 mesi, se non siamo a fine gioco)
-            if ((meseAttuale - 1) % 3 === 0 && meseAttuale <= maxMesi && !isForcedTurn) {
+            // Gli imprevisti scattano regolarmente a fine mese 3, 6, 9
+            if ((meseAttuale - 1) % 3 === 0 && meseAttuale <= maxMesi) {
                 eseguiImprevistoDinamico();
             } else {
                 generaNuovaCarta();
@@ -743,40 +785,23 @@
         }, 400);
     }
 
-    // MECCANICA DEGLI IMPREVISTI COLLEGATI (PUNTO 2 E RICHIESTA UTENTE)
-    // Sfrutta l'array dei prestiti attivi per determinare se una scelta passata è stata fortunata o tossica
+    // IMPREVISTI REATTIVI
     function eseguiImprevistoDinamico() {
-        // Cerca se l'utente ha fatto determinate scelte
         const haNotebook = prestitiAttivi.includes("pc_lavoro");
         const haMaster = prestitiAttivi.includes("corso_coding");
         const haSmartphoneTossico = prestitiAttivi.includes("smartphone_top");
-        const haVacanzaBali = prestitiAttivi.includes("vacanza_lusso");
         const haMonopattinoTossico = prestitiAttivi.includes("monopattino_mod");
+        const haDentistaSqualo = prestitiAttivi.includes("dentista_squalo");
 
-        // Elenco imprevisti possibili da filtrare in base alla storia del giocatore
         let opzioniEvento = [];
 
-        // 1. Caso Fortunato: Ha comprato il PC da lavoro o fatto il Master
-        if (haNotebook || haMaster) {
+        // Reazione se hai scelto lo Squalo per i denti al Mese 4
+        if (haDentistaSqualo) {
             opzioniEvento.push({
-                icon: "🚀",
-                title: "PROMOZIONE PROFESSIONALE!",
-                desc: "Le tue nuove competenze digitali e tecnologiche hanno fatto colpo sul capo! Grazie agli strumenti acquistati o al corso seguito, hai ottenuto un avanzamento di carriera immediato.",
-                effect: "EFFETTO: Le tue maggiori entrate abbattono il debito complessivo! (-25% Sovraindebitamento)",
-                action: () => {
-                    sovraindebitamento = Math.max(0, sovraindebitamento - 25);
-                    generaNuovaCarta();
-                }
-            });
-        }
-
-        // 2. Caso Sfortunato/Tossico: Ha preso lo smartphone o il monopattino con clausole folli
-        if (haSmartphoneTossico || haMonopattinoTossico) {
-            opzioniEvento.push({
-                icon: "🦈",
-                title: "CLAUSOLA RECESSIVA ATTIVATA!",
-                desc: "Hai presente la finanziaria aggressiva a cui ti sei affidato per i beni di consumo? Hanno modificato unilateralmente i costi di gestione del conto a causa dell'inflazione, applicando la penale nascosta sul retro del contratto!",
-                effect: "EFFETTO: Il costo reale del tuo debito schizza verso l'alto! (+20% Sovraindebitamento)",
+                icon: "🦷",
+                title: "INTERESSI USURAI SULL'EMERGENZA",
+                desc: "La finanziaria rapida a cui hai chiesto l'urgenza medica ha applicato costi di mora per un ritardo tecnico bancario. Le rate sono andate fuori controllo.",
+                effect: "EFFETTO: Gli strozzini picchiano duro! (+20% Sovraindebitamento)",
                 action: () => {
                     sovraindebitamento += 20;
                     generaNuovaCarta();
@@ -784,13 +809,25 @@
             });
         }
 
-        // 3. Caso Mancato Investimento: Se NON ha preso l'auto usata quando è apparsa
-        if (!prestitiAttivi.includes("auto_usata")) {
+        if (haNotebook || haMaster) {
             opzioniEvento.push({
-                icon: "🏃‍♂️",
-                title: "PROBLEMI DI TRASPORTO",
-                desc: "Non avendo un mezzo di trasporto affidabile, sei arrivato tardi a un colloquio fondamentale per una consulenza extra ben pagata. Hai perso l'opportunità economica dell'anno.",
-                effect: "EFFETTO: Spese di trasporto pubblico d'emergenza e mancati guadagni pesano sul budget. (+15% Sovraindebitamento)",
+                icon: "🚀",
+                title: "PROMOZIONE PROFESSIONALE!",
+                desc: "Grazie alle competenze o agli strumenti professionali su cui hai investito, hai ottenuto un incremento istantaneo di entrate.",
+                effect: "EFFETTO: Le maggiori entrate riducono la pressione! (-20% Sovraindebitamento)",
+                action: () => {
+                    sovraindebitamento = Math.max(0, sovraindebitamento - 20);
+                    generaNuovaCarta();
+                }
+            });
+        }
+
+        if (haSmartphoneTossico || haMonopattinoTossico) {
+            opzioniEvento.push({
+                icon: "🦈",
+                title: "CLAUSOLA CORROSIVA ATTIVATA",
+                desc: "Le finanziarie aggressive dei tuoi vecchi sfizi hanno modificato unilateralmente i costi del contratto inserendo balzelli d'inflazione nascosti.",
+                effect: "EFFETTO: Il costo reale del debito lievita! (+15% Sovraindebitamento)",
                 action: () => {
                     sovraindebitamento += 15;
                     generaNuovaCarta();
@@ -798,39 +835,36 @@
             });
         }
 
-        // 4. Imprevisto Neutro/Generico di vita se non si attivano i precedenti
         opzioniEvento.push({
             icon: "🔧",
-            title: "GUASTO CASALINGO",
-            desc: "La lavatrice ha deciso di abbandonarti allagando il bagno. È una spesa imprevista immediata e non programmabile.",
-            effect: "EFFETTO: Devi attingere a microcrediti d'urgenza. (+10% Sovraindebitamento)",
+            title: "SPESA IDRAULICA IMPREVISTA",
+            desc: "Un tubo del bagno ha deciso di rompersi. Riparazione immediata non rimandabile.",
+            effect: "EFFETTO: Spesa d'urgenza sul groppone. (+10% Sovraindebitamento)",
             action: () => {
                 sovraindebitamento += 10;
                 generaNuovaCarta();
             }
         });
 
-        // Prende uno degli eventi validi emersi dalla storia del giocatore
-        // Diamo priorità agli eventi collegati alle scelte reali se esistono
         let eventoSelezionato = opzioniEvento[0]; 
         if (opzioniEvento.length > 1 && Math.random() > 0.3) {
-            // Pesca casualmente tra quelli disponibili per dare varietà
             eventoSelezionato = opzioniEvento[Math.floor(Math.random() * (opzioniEvento.length - 1))];
         }
 
-        // Lancia il modale visivo
-        mostraImprevisto(eventoSelezionato.title, eventoSelezionato.desc, eventoSelezionato.effect, eventoSelezionato.title.includes("PROMOZIONE"), eventoSelezionato.action);
+        mostraImprevisto(eventoSelezionato.title, eventoSelezionato.desc, eventoSelezionato.effect, eventoSelezionato.title.includes("PROMOZIONE"), eventoSelezionato.action, false);
     }
 
-    // GESTIONE DELLA FINESTRA MODALE DEGLI IMPREVISTI
+    // GESTIONE DELLA FINESTRA MODALE E COMUNICAZIONE CON L'IFRAME DI GDEVELOP
     let callbackCorrenteModale = null;
 
-    function mostraImprevisto(titolo, descrizione, effetto, isGood, onConfirm) {
+    function mostraImprevisto(titolo, descrizione, effetto, isGood, onConfirm, isFinal = false) {
         document.getElementById("ev-title").innerText = titolo;
         document.getElementById("ev-desc").innerText = descrizione;
         document.getElementById("ev-effect").innerText = effetto;
         
         const effectEl = document.getElementById("ev-effect");
+        const btnModale = document.querySelector(".event-btn");
+        
         if (isGood) {
             effectEl.className = "event-effect effect-good";
             document.getElementById("ev-icon").innerText = "🎉";
@@ -842,7 +876,18 @@
         if (titolo.includes("VITTORIA")) document.getElementById("ev-icon").innerText = "👑";
         if (titolo.includes("OVER")) document.getElementById("ev-icon").innerText = "💀";
 
-        callbackCorrenteModale = onConfirm;
+        // TASTO GRAFICO EMESSO PER LA CHIUSURA FINALE
+        if (isFinal) {
+            btnModale.innerText = "Chiudi e torna al gioco principale 🚪";
+            btnModale.className = "event-btn exit-style";
+            btnModale.setAttribute("onclick", "chiudiEInviaAGDevelop()");
+        } else {
+            btnModale.innerText = "Ho capito";
+            btnModale.className = "event-btn";
+            btnModale.setAttribute("onclick", "closeEventModal()");
+            callbackCorrenteModale = onConfirm;
+        }
+
         document.getElementById("event-overlay").classList.add("active");
     }
 
@@ -853,28 +898,10 @@
         }
     }
 
-    // RESET DEL GIOCO IN CASO DI FINISH
-    function resetGioco() {
-        meseAttuale = 1;
-        sovraindebitamento = 10;
-        prestitiAttivi = [];
-        mazzoEmergenzaCorrente = [];
-        isForcedTurn = false;
-        generaNuovaCarta();
+    // Invia il messaggio postMessage a GDevelop per distruggere l'iframe in sicurezza
+    function chiudiEInviaAGDevelop() {
+        window.parent.postMessage("minigioco_finito", "*");
     }
-
-    // CONTROLLI VELOCI DA TASTIERA (AGGIUNTI PER COMODITÀ DI SVILUPPO)
-    window.addEventListener('keydown', function(e) {
-        if (document.getElementById("event-overlay").classList.contains("active")) {
-            if (e.key === "Enter" || e.key === " ") {
-                closeEventModal();
-            }
-            return;
-        }
-        if (e.key === "ArrowLeft") handleSwipe('left');
-        if (e.key === "ArrowRight") handleSwipe('right');
-        if (e.key === "ArrowUp") toggleFlip();
-    });
 
     // AVVIO DEL MINIGIOCO
     generaNuovaCarta();
