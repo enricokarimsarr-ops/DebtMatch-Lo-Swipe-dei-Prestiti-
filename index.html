@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DebtMatch v2 - Il Labirinto del Credito</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root {
             --bg-color: #0f0f13;
@@ -33,36 +32,10 @@
             user-select: none;
         }
 
-        /* Top Bar per Fullscreen */
-        .top-bar {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            z-index: 50;
-        }
-
-        .icon-btn {
-            background: rgba(47, 53, 66, 0.6);
-            border: 1px solid #4f566d;
-            color: var(--text-main);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        .icon-btn:hover { background: #3f4656; color: var(--accent); }
-
         .header-section {
             text-align: center;
             margin-bottom: 10px;
             z-index: 10;
-            margin-top: 20px;
         }
 
         h1 { margin: 0 0 5px 0; color: var(--primary); font-size: 2.2rem; text-shadow: 0 0 10px rgba(253, 58, 115, 0.3); }
@@ -95,7 +68,9 @@
         #active-loans-txt { color: var(--warning); }
 
         /* Barra Sovraindebitamento */
-        .progress-container { width: 100%; }
+        .progress-container {
+            width: 100%;
+        }
         .progress-label {
             font-size: 0.85rem;
             color: var(--text-muted);
@@ -118,7 +93,7 @@
             transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* Notifiche Tipo Turno */
+        /* Notifiche Tipo Turno (es. Turno Obbligatorio) */
         #turn-badge {
             background: #2f3542;
             padding: 4px 10px;
@@ -132,76 +107,25 @@
         }
         .badge-normal { color: var(--text-muted); border: 1px solid #3f4656; }
         .badge-forced { color: #fff; background: var(--danger) !important; border: 1px solid var(--primary); animation: pulse 1.5s infinite; }
-        .badge-bivio { color: #fff; background: var(--warning) !important; border: 1px solid #ff7f50; animation: pulse-bivio 1.5s infinite; }
 
-        /* CONTENITORE GIOCO (Gestisce singola o doppia carta) */
-        #game-area {
+        /* CONTENITORE CARTE CON FLIP 3D */
+        #game-container {
             position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            height: 440px; /* Spazio sufficiente per le carte e animazioni */
-        }
-
-        /* Contenitore Singola Carta (Es. Turno Normale) */
-        #single-card-container {
-            position: absolute;
             width: 340px;
             height: 420px;
             perspective: 1000px;
-            transition: opacity 0.3s;
-            z-index: 5;
-        }
-
-        /* Contenitore Bivio (Due carte affiancate) */
-        #bivio-container {
-            position: absolute;
-            width: 720px; /* 340 * 2 + gap */
-            height: 420px;
-            display: flex;
-            gap: 40px;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-            z-index: 1;
-        }
-
-        #bivio-container.active {
-            opacity: 1;
-            pointer-events: auto;
-            z-index: 5;
-        }
-
-        #single-card-container.hidden {
-            opacity: 0;
-            pointer-events: none;
-            z-index: 1;
         }
 
         .card-perspective {
-            width: 340px;
-            height: 420px;
+            width: 100%;
+            height: 100%;
             position: relative;
             transform-style: preserve-3d;
             transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer; /* Indizio visivo per il bivio */
         }
 
-        .card-perspective.flipped { transform: rotateY(180deg); }
-
-        /* Effetti per indicare la selezione nel bivio */
-        .card-perspective.selected {
-            transform: scale(1.05) translateY(-10px);
-            z-index: 10;
-        }
-        
-        /* Animazione di scarto per la carta NON selezionata nel bivio */
-        .card-perspective.discarded {
-            transform: scale(0.8) translateY(50px);
-            opacity: 0;
-            transition: all 0.5s ease;
+        .card-perspective.flipped {
+            transform: rotateY(180deg);
         }
 
         /* Facciate delle carte */
@@ -233,9 +157,20 @@
         }
 
         /* Elementi della carta */
-        .card-header { text-align: center; pointer-events: none; }
-        .card-title { color: var(--warning); margin: 0 0 8px 0; font-size: 1.35rem; }
-        .card-amount { font-size: 2.2rem; font-weight: bold; color: #fff; letter-spacing: -1px; }
+        .card-header {
+            text-align: center;
+        }
+        .card-title {
+            color: var(--warning);
+            margin: 0 0 8px 0;
+            font-size: 1.35rem;
+        }
+        .card-amount {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #fff;
+            letter-spacing: -1px;
+        }
         .card-body {
             background: rgba(47, 53, 66, 0.6);
             padding: 16px;
@@ -243,7 +178,6 @@
             font-size: 1rem;
             line-height: 1.5;
             border: 1px solid rgba(255,255,255,0.05);
-            pointer-events: none;
         }
         .taeg-box {
             font-size: 1.4rem;
@@ -259,7 +193,6 @@
             color: #718093;
             text-align: center;
             font-style: italic;
-            pointer-events: none;
         }
 
         /* Contenuto Retro Carta (Dettagli Istituto) */
@@ -271,7 +204,12 @@
             margin-bottom: 5px;
             display: block;
         }
-        .bank-name { font-size: 1.4rem; font-weight: bold; color: #fff; margin-bottom: 12px; }
+        .bank-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 12px;
+        }
         .clause-box {
             background: rgba(253, 58, 115, 0.1);
             border-left: 4px solid var(--primary);
@@ -286,7 +224,7 @@
             border-left-color: var(--success);
         }
 
-        /* Classi Animazione Swipe (Volo via per singola carta) */
+        /* Classi Animazione Swipe (Volo via) */
         .swipe-left-anim { transform: translate(-200%, 30px) rotate(-40deg) !important; opacity: 0; transition: all 0.4s ease; }
         .swipe-right-anim { transform: translate(200%, 30px) rotate(40deg) !important; opacity: 0; transition: all 0.4s ease; }
 
@@ -298,7 +236,6 @@
             gap: 12px;
             margin-top: 15px;
             width: 340px;
-            min-height: 110px; /* Spazio fisso per evitare saltelli */
         }
 
         .flip-btn {
@@ -340,20 +277,13 @@
         #btn-reject { background: var(--danger); color: white; box-shadow: 0 0 15px rgba(255, 71, 87, 0.3); }
         #btn-accept { background: var(--success); color: white; box-shadow: 0 0 15px rgba(46, 213, 115, 0.3); }
 
-        /* Hint testuale per il bivio */
-        #bivio-hint {
-            display: none;
-            color: var(--warning);
-            font-size: 1.1rem;
-            font-weight: bold;
-            text-align: center;
-            margin-top: 10px;
-            animation: pulse-text 2s infinite;
+        .shortcuts-tip {
+            font-size: 0.8rem;
+            color: #57606f;
+            margin-top: 12px;
         }
 
-        .shortcuts-tip { font-size: 0.8rem; color: #57606f; margin-top: 12px; }
-
-        /* OVERLAY MODALE (Imprevisti e Fine Partita) */
+        /* MODALE EVENTI / IMPREVISTI OVERLAY */
         #event-overlay {
             position: fixed;
             top: 0;
@@ -371,27 +301,40 @@
             padding: 20px;
             box-sizing: border-box;
         }
-        #event-overlay.active { opacity: 1; pointer-events: auto; }
+        #event-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
 
         .event-modal {
             background: #1e1e2a;
             border: 2px solid var(--accent);
             border-radius: 24px;
             width: 100%;
-            max-width: 450px;
-            padding: 30px;
+            max-width: 400px;
+            padding: 25px;
             box-sizing: border-box;
             text-align: center;
             box-shadow: 0 20px 50px rgba(0,0,0,0.8);
             transform: scale(0.8);
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        #event-overlay.active .event-modal { transform: scale(1); }
+        #event-overlay.active .event-modal {
+            transform: scale(1);
+        }
 
-        .event-icon { font-size: 4rem; margin-bottom: 15px; display: block; }
-        .event-title { font-size: 1.8rem; color: var(--accent); margin: 0 0 12px 0; }
+        .event-icon {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+        .event-title {
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin: 0 0 12px 0;
+        }
         .event-desc {
-            font-size: 1.05rem;
+            font-size: 1rem;
             color: #f5f6fa;
             line-height: 1.6;
             margin-bottom: 20px;
@@ -399,46 +342,29 @@
             padding: 15px;
             border-radius: 12px;
         }
-        .event-effect { font-size: 1.2rem; font-weight: bold; margin-bottom: 25px; }
+        .event-effect {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 22px;
+        }
         .effect-bad { color: var(--danger); }
         .effect-good { color: var(--success); }
-        .effect-neutral { color: var(--warning); }
-
-        /* Contenitore Pulsanti Modale */
-        .modal-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
 
         .event-btn {
             background: linear-gradient(90deg, #00cec9, #00d2d3);
             color: #101015;
             border: none;
-            padding: 14px 30px;
-            font-size: 1.05rem;
+            padding: 12px 30px;
+            font-size: 1rem;
             font-weight: bold;
             border-radius: 30px;
             cursor: pointer;
             box-shadow: 0 5px 15px rgba(0, 210, 211, 0.4);
-            transition: transform 0.1s, box-shadow 0.2s;
-            flex: 1;
-            min-width: 140px;
+            transition: transform 0.1s;
         }
         .event-btn:active { transform: scale(0.95); }
-        
-        .btn-exit {
-            background: #2f3542;
-            color: #fff;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
-        }
-        .btn-exit:hover {
-            background: #ff4757;
-            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
-        }
 
-        /* Log Notifiche Rapide */
+        /* Log Notifiche Rapide in basso */
         #news-feed {
             width: 340px;
             text-align: center;
@@ -454,49 +380,9 @@
             70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); }
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
         }
-        
-        @keyframes pulse-bivio {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 165, 2, 0.7); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255, 165, 2, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 165, 2, 0); }
-        }
-
-        @keyframes pulse-text {
-            0% { opacity: 1; }
-            50% { opacity: 0.6; }
-            100% { opacity: 1; }
-        }
-
-        /* Responsive per il Bivio su schermi piccoli */
-        @media (max-width: 760px) {
-            #bivio-container {
-                width: 100%;
-                gap: 15px;
-                padding: 0 10px;
-            }
-            .card-perspective {
-                width: 45vw; /* Si adattano alla larghezza su mobile */
-                height: 60vh;
-                min-height: 380px;
-            }
-            .card-amount { font-size: 1.8rem; }
-            .card-title { font-size: 1.1rem; }
-            .card-body { font-size: 0.9rem; padding: 10px; }
-            
-            #single-card-container {
-                width: 300px;
-            }
-        }
     </style>
 </head>
 <body>
-
-<!-- Tasto Fullscreen -->
-<div class="top-bar">
-    <button class="icon-btn" onclick="toggleFullScreen()" title="Schermo Intero">
-        <i class="fa-solid fa-expand" id="fs-icon"></i>
-    </button>
-</div>
 
 <div class="header-section">
     <h1>🏦 DebtMatch v2</h1>
@@ -522,590 +408,475 @@
 
 <div id="turn-badge" class="badge-normal">Turno Ordinario</div>
 
-<!-- Area di Gioco Dinamica -->
-<div id="game-area">
-    
-    <!-- CONTENITORE SINGOLA CARTA (Turno Normale o Emergenza) -->
-    <div id="single-card-container" class="card-perspective">
-        <!-- FRONTE -->
-        <div id="card-front-el" class="card-front"></div>
-        <!-- RETRO -->
-        <div id="card-back-el" class="card-back"></div>
-    </div>
-
-    <!-- CONTENITORE BIVIO (Due carte simultanee) -->
-    <div id="bivio-container">
-        <!-- CARTA SINISTRA -->
-        <div id="bivio-card-left" class="card-perspective" onclick="selezionaBivio('left')">
-            <div id="bivio-front-left" class="card-front"></div>
-            <div id="bivio-back-left" class="card-back"></div>
+<!-- Spazio della Carta Interattiva -->
+<div id="game-container">
+    <div id="card-inner-wrapper" class="card-perspective">
+        <!-- FRONTE DELLA CARTA -->
+        <div id="card-front-el" class="card-front">
+            <!-- Riempito dinamicamente da JS -->
         </div>
-        
-        <!-- CARTA DESTRA -->
-        <div id="bivio-card-right" class="card-perspective" onclick="selezionaBivio('right')">
-            <div id="bivio-front-right" class="card-front"></div>
-            <div id="bivio-back-right" class="card-back"></div>
+        <!-- RETRO DELLA CARTA -->
+        <div id="card-back-el" class="card-back">
+            <!-- Riempito dinamicamente da JS -->
         </div>
     </div>
-
 </div>
 
 <!-- Interazioni e Bottoni -->
 <div class="interaction-area">
+    <button class="flip-btn" onclick="toggleFlip()">🔄 Gira la Carta (Ispeziona Clausole)</button>
     
-    <!-- Controlli Standard (Visibili per singola carta) -->
-    <div id="standard-controls">
-        <button class="flip-btn" onclick="toggleFlipSingle()" style="margin: 0 auto 15px auto;">🔄 Gira la Carta (Ispeziona Clausole)</button>
-        <div class="controls">
-            <button class="btn" id="btn-reject" onclick="handleSwipe('left')">❌</button>
-            <button class="btn" id="btn-accept" onclick="handleSwipe('right')">❤️</button>
-        </div>
+    <div class="controls">
+        <button class="btn" id="btn-reject" onclick="handleSwipe('left')">❌</button>
+        <button class="btn" id="btn-accept" onclick="handleSwipe('right')">❤️</button>
     </div>
-
-    <!-- Controlli Bivio (Visibili durante il bivio) -->
-    <div id="bivio-controls" style="display: none; width: 100%; flex-direction: column; align-items: center;">
-        <button class="flip-btn" onclick="toggleFlipBivio()" style="margin-bottom: 10px;">🔄 Gira Entrambe le Carte</button>
-        <div id="bivio-hint">Scegli una carta cliccandola. L'altra verrà scartata.</div>
-    </div>
-    
 </div>
 
 <div id="news-feed"></div>
 
-<p class="shortcuts-tip" id="keyboard-hint">Scorciatoie: Freccia ⬅️ Rifiuta | Freccia ➡️ Accetta | Freccia ⬆️ Gira</p>
+<p class="shortcuts-tip">Scorciatoie: Freccia ⬅️ Rifiuta | Freccia ➡️ Accetta | Freccia ⬆️ Gira</p>
 
-<!-- OVERLAY MODALE PER GLI IMPREVISTI E FINE PARTITA -->
+<!-- OVERLAY MODALE PER GLI IMPREVISTI -->
 <div id="event-overlay">
     <div class="event-modal">
         <span id="ev-icon" class="event-icon">🚨</span>
         <h2 id="ev-title" class="event-title">Titolo Imprevisto</h2>
         <div id="ev-desc" class="event-desc">Descrizione dell'evento...</div>
         <div id="ev-effect" class="event-effect">Effetto Finanziario</div>
-        
-        <div class="modal-buttons" id="modal-buttons-container">
-            <!-- Popolato dinamicamente da JS -->
-        </div>
+        <button class="event-btn" onclick="closeEventModal()">Ho capito</button>
     </div>
 </div>
 
 <script>
-    // ---------------------------------------------------------
-    // 1. GESTIONE FULLSCREEN E CHIUSURA GDEVELOP
-    // ---------------------------------------------------------
-    
-    function toggleFullScreen() {
-        const doc = window.document;
-        const docEl = doc.documentElement;
-        const icon = document.getElementById('fs-icon');
-
-        const requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
-        const cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
-
-        if (!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
-            if (requestFullScreen) {
-                requestFullScreen.call(docEl);
-                icon.classList.remove('fa-expand');
-                icon.classList.add('fa-compress');
-            }
-        } else {
-            if (cancelFullScreen) {
-                cancelFullScreen.call(doc);
-                icon.classList.remove('fa-compress');
-                icon.classList.add('fa-expand');
-            }
-        }
-    }
-
-    // Tenta di andare in fullscreen al primo click ovunque nello schermo (richiesto dai browser per sicurezza)
-    document.body.addEventListener('click', function initFS() {
-        // Se non siamo in un iframe, proviamo (opzionale, scommentalo se vuoi forzarlo)
-        // if (!document.fullscreenElement) toggleFullScreen();
-        document.body.removeEventListener('click', initFS);
-    }, { once: true });
-
-    // Funzione chiamata quando l'utente sceglie "Esci" a fine partita
-    function exitToGDevelop() {
-        // 1. Prova a chiudere la finestra (funziona se aperta via window.open)
-        window.close();
-        
-        // 2. Comunicazione tramite postMessage (Metodo consigliato per gli iframe in GDevelop)
-        // GDevelop può ascoltare questo messaggio tramite estensioni JavaScript
-        window.parent.postMessage({ type: 'DEBTMATCH_EXIT' }, '*');
-        
-        // Fallback visivo se i metodi sopra falliscono o sono bloccati dal browser
-        document.body.innerHTML = `
-            <div style="height: 100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; color:#fff; font-family:sans-serif; background:#0f0f13;">
-                <i class="fa-solid fa-circle-check" style="font-size: 4rem; color: #2ed573; margin-bottom: 20px;"></i>
-                <h2 style="margin:0">Partita Conclusa</h2>
-                <p style="color:#a4b0be;">Puoi chiudere questa finestra/scheda.</p>
-            </div>
-        `;
-    }
-
-    // ---------------------------------------------------------
-    // 2. DATABASE E STATO DEL GIOCO
-    // ---------------------------------------------------------
-    
+    // DATABASE DELLE OFFERTE DI PRESTITO
+    // Ogni carta ha scopi tracciabili e banche emettitrici differenti
     const databaseCarte = [
-        { id: "pc_lavoro", titolo: "💻 Notebook Professionale", importo: "1.800€", dettagli: "Rata: 160€/mese<br>Durata: 1 Anno", taeg: "4.2%", isTaegHigh: false, tipoImpegno: "utile", bancaNome: "Banca Sviluppo & Territorio", bancaTipo: "tradizionale", bancaClausola: "Istituto solido. Nessun costo nascosto. Ideale per investimenti produttivi." },
-        { id: "smartphone_top", titolo: "📱 Smartphone Ultra Flagship", importo: "1.400€", dettagli: "Rata: 145€/mese<br>Durata: 1 Anno", taeg: "21.5%", isTaegHigh: true, tipoImpegno: "voluttuario", bancaNome: "Flash-Credit Instant", bancaTipo: "aggressiva", bancaClausola: "ATTENZIONE: Penale del 30% sul debito residuo in caso di minimo ritardo della rata." },
-        { id: "corso_coding", titolo: "🎓 Master Specialistico Tech", importo: "3.500€", dettagli: "Rata: 110€/mese<br>Durata: 3 Anni", taeg: "3.5%", isTaegHigh: false, tipoImpegno: "utile", bancaNome: "Fondo Nazionale Credito Giovani", bancaTipo: "tradizionale", bancaClausola: "Finanziamento agevolato e garantito. Estinguibile senza penali." },
-        { id: "vacanza_lusso", titolo: "🌴 Resort All-Inclusive Bali", importo: "4.000€", dettagli: "Rata: 95€/mese<br>Durata: 5 Anni", taeg: "18.9%", isTaegHigh: true, tipoImpegno: "voluttuario", bancaNome: "EasyPocket Finance", bancaTipo: "aggressiva", bancaClausola: "ATTENZIONE: Interessi capitalizzati mensilmente. Più tempo passa, più aumenta il costo reale." },
-        { id: "auto_usata", titolo: "🚗 Auto Usata Affidabile", importo: "7.000€", dettagli: "Rata: 210€/mese<br>Durata: 3 Anni", taeg: "5.5%", isTaegHigh: false, tipoImpegno: "utile", bancaNome: "Banca Popolare Credit", bancaTipo: "tradizionale", bancaClausola: "Tasso fisso garantito. Include polizza base di protezione del credito in caso di sinistro." },
-        { id: "monopattino_mod", titolo: "🛴 Monopattino Elettrico Tuned", importo: "900€", dettagli: "Rata: 90€/mese<br>Durata: 1 Anno", taeg: "24.1%", isTaegHigh: true, tipoImpegno: "voluttuario", bancaNome: "SharkLoan Digital", bancaTipo: "squalo", bancaClausola: "PERICOLO: Clausola di rivalsa immediata sui tuoi beni se salti una rata. Tasso al limite dell'usura." },
-        { id: "ristrutturazione_casa", titolo: "🏠 Isolamento Termico Stanza", importo: "5.000€", dettagli: "Rata: 150€/mese<br>Durata: 3 Anni", taeg: "4.8%", isTaegHigh: false, tipoImpegno: "utile", bancaNome: "Banca Sviluppo & Territorio", bancaTipo: "tradizionale", bancaClausola: "Prestito green con parziale detrazione fiscale del tasso di interesse." },
-        { id: "arredo_design", titolo: "🛋️ Divano di Design Italiano", importo: "3.200€", dettagli: "Rata: 85€/mese<br>Durata: 4 Anni", taeg: "14.5%", isTaegHigh: true, tipoImpegno: "voluttuario", bancaNome: "PrendiOra PagaMai", bancaTipo: "aggressiva", bancaClausola: "Tasso promozionale solo per il primo anno, poi variabile senza cap massimo." },
-        { id: "attrezzatura_video", titolo: "🎥 Kit Videomaker Pro", importo: "2.500€", dettagli: "Rata: 120€/mese<br>Durata: 2 Anni", taeg: "6.1%", isTaegHigh: false, tipoImpegno: "utile", bancaNome: "Banca Artigiani", bancaTipo: "tradizionale", bancaClausola: "Finanziamento mirato per avvio micro-imprese. Tasso fisso e trasparente." }
+        {
+            id: "pc_lavoro",
+            titolo: "💻 Notebook Professionale",
+            importo: "1.800€",
+            dettagli: "Rata: 160€/mese<br>Durata: 1 Anno",
+            taeg: "4.2%",
+            isTaegHigh: false,
+            tipoImpegno: "utile",
+            bancaNome: "Banca Sviluppo & Territorio",
+            bancaTipo: "tradizionale",
+            bancaClausola: "Istituto solido. Nessun costo nascosto. Ideale per investimenti produttivi."
+        },
+        {
+            id: "smartphone_top",
+            titolo: "📱 Smartphone Ultra Flagship",
+            importo: "1.400€",
+            dettagli: "Rata: 145€/mese<br>Durata: 1 Anno",
+            taeg: "21.5%",
+            isTaegHigh: true,
+            tipoImpegno: "voluttuario",
+            bancaNome: "Flash-Credit Instant",
+            bancaTipo: "aggressiva",
+            bancaClausola: "ATTENZIONE: Penale del 30% sul debito residuo in caso di minimo ritardo della rata."
+        },
+        {
+            id: "corso_coding",
+            titolo: "🎓 Master Specialistico Tech",
+            importo: "3.500€",
+            dettagli: "Rata: 110€/mese<br>Durata: 3 Anni",
+            taeg: "3.5%",
+            isTaegHigh: false,
+            tipoImpegno: "utile",
+            bancaNome: "Fondo Nazionale Credito Giovani",
+            bancaTipo: "tradizionale",
+            bancaClausola: "Finanziamento agevolato e garantito. Estinguibile senza penali."
+        },
+        {
+            id: "vacanza_lusso",
+            titolo: "🌴 Resort All-Inclusive Bali",
+            importo: "4.000€",
+            dettagli: "Rata: 95€/mese<br>Durata: 5 Anni",
+            taeg: "18.9%",
+            isTaegHigh: true,
+            tipoImpegno: "voluttuario",
+            bancaNome: "EasyPocket Finance",
+            bancaTipo: "aggressiva",
+            bancaClausola: "ATTENZIONE: Interessi capitalizzati mensilmente. Più tempo passa, più aumenta il costo reale."
+        },
+        {
+            id: "auto_usata",
+            titolo: "🚗 Auto Usata Affidabile",
+            importo: "7.000€",
+            dettagli: "Rata: 210€/mese<br>Durata: 3 Anni",
+            taeg: "5.5%",
+            isTaegHigh: false,
+            tipoImpegno: "utile",
+            bancaNome: "Banca Popolare Credit",
+            bancaTipo: "tradizionale",
+            bancaClausola: "Tasso fisso garantito. Include polizza base di protezione del credito in caso di sinistro."
+        },
+        {
+            id: "monopattino_mod",
+            titolo: "🛴 Monopattino Elettrico Tuned",
+            importo: "900€",
+            dettagli: "Rata: 90€/mese<br>Durata: 1 Anno",
+            taeg: "24.1%",
+            isTaegHigh: true,
+            tipoImpegno: "voluttuario",
+            bancaNome: "SharkLoan Digital",
+            bancaTipo: "squalo",
+            bancaClausola: "PERICOLO: Clausola di rivalsa immediata sui tuoi beni se salti una rata. Tasso al limite dell'usura."
+        },
+        {
+            id: "ristrutturazione_casa",
+            titolo: "🏠 Isolamento Termico Stanza",
+            importo: "5.000€",
+            dettagli: "Rata: 150€/mese<br>Durata: 3 Anni",
+            taeg: "4.8%",
+            isTaegHigh: false,
+            tipoImpegno: "utile",
+            bancaNome: "Banca Sviluppo & Territorio",
+            bancaTipo: "tradizionale",
+            bancaClausola: "Prestito green con parziale detrazione fiscale del tasso di interesse."
+        }
     ];
 
+    // CARTE OBBLIGATORIE DI EMERGENZA (Il giocatore deve sceglierne una forzatamente quando capitano)
     const emergenzeSpesa = [
-        { id: "emergenza_dentista", titolo: "🦷 Cure Odontoiatriche", importo: "2.200€", dettagli: "Opzione A: Rata 200€/mese, TAEG 4.0% (Banca Solida)", taeg: "4.0%", isTaegHigh: false, tipoImpegno: "emergenza_buona", bancaNome: "Banca San Apollonia", bancaTipo: "tradizionale", bancaClausola: "Tasso agevolato per spese mediche necessarie." },
-        { id: "emergenza_dentista_squalo", titolo: "🦷 Cure Odontoiatriche", importo: "2.200€", dettagli: "Opzione B: Rata 90€/mese, TAEG 26% (Finanziaria Rapida)", taeg: "26.0%", isTaegHigh: true, tipoImpegno: "emergenza_cattiva", bancaNome: "PrestiSubito 24h", bancaTipo: "squalo", bancaClausola: "Nessun controllo sul reddito, approvazione in 5 minuti, ma interessi strangolanti." }
+        {
+            id: "emergenza_dentista",
+            titolo: "🦷 Cure Odontoiatriche Urgenti",
+            importo: "2.200€",
+            dettagli: "Opzione A: Rata 200€/mese, TAEG 4.0% (Banca Solida)",
+            taeg: "4.0%",
+            isTaegHigh: false,
+            tipoImpegno: "emergenza_buona",
+            bancaNome: "Banca San Apollonia (Convenzionata)",
+            bancaTipo: "tradizionale",
+            bancaClausola: "Tasso agevolato per spese mediche necessarie."
+        },
+        {
+            id: "emergenza_dentista_squalo",
+            titolo: "🦷 Cure Odontoiatriche Urgenti",
+            importo: "2.200€",
+            dettagli: "Opzione B: Rata 90€/mese, TAEG 26% (Finanziaria Rapida)",
+            taeg: "26.0%",
+            isTaegHigh: true,
+            tipoImpegno: "emergenza_cattiva",
+            bancaNome: "PrestiSubito 24h",
+            bancaTipo: "squalo",
+            bancaClausola: "Nessun controllo sul reddito, approvazione in 5 minuti, ma interessi strangolanti."
+        }
     ];
 
+    // STATO DEL GIOCO
     let meseAttuale = 1;
-    let maxMesi = 12; 
-    let sovraindebitamento = 10; 
-    let prestitiAttivi = []; 
-    
-    // Stati del turno
-    let cartaCorrente = null; // Usata nei turni singoli
-    let mazzoBivioCorrente = []; // Usata nei turni bivio
-    
+    let maxMesi = 12; // Sopravvivi 1 anno per vincere
+    let sovraindebitamento = 10; // Parte da un 10% di base
+    let prestitiAttivi = []; // Array degli ID dei prestiti accettati
+    let cartaCorrente = null;
     let inAnimazione = false;
-    let singleFlipped = false;
-    let bivioFlipped = false;
-    
-    // Modalità di turno: 'normale', 'bivio', 'emergenza'
-    let tipoTurnoCorrente = 'normale'; 
+    let eFlipped = false;
+    let isForcedTurn = false;
+    let mazzoEmergenzaCorrente = [];
 
-    // ---------------------------------------------------------
-    // 3. GENERAZIONE TURNI E CARTE
-    // ---------------------------------------------------------
-    
+    // FUNZIONE DI INIZIALIZZAZIONE / GENERAZIONE CARTA
     function generaNuovaCarta() {
+        // Controllo Condizioni di Fine Gioco
         if (sovraindebitamento >= 100) {
-            mostraSchermataFineGioco(false);
+            mostraImprevisto("💥 GAME OVER", "La barra del sovraindebitamento è esplosa al 100%! Le rate mensili hanno superato completamente le tue entrate disponibili. Sei andato in bancarotta finanziaria.", "EFFETTO: Fallimento Economico", false, () => { resetGioco(); });
             return;
         }
 
         if (meseAttuale > maxMesi) {
-            mostraSchermataFineGioco(true);
+            mostraImprevisto("🏆 VITTORIA FINALE!", "Congratulazioni! Sei riuscito a navigare nel labirinto del credito per un intero anno (12 mesi) gestendo gli imprevisti senza fallire! Hai dimostrato ottime capacità di analisi finanziaria.", "EFFETTO: Campione di Educazione Finanziaria", true, () => { resetGioco(); });
             return;
         }
 
-        // Reset Visivo Globale
-        document.getElementById("single-card-container").className = "card-perspective hidden";
-        document.getElementById("bivio-container").className = "";
-        
-        // Reset rotazioni
-        document.getElementById("single-card-container").classList.remove("flipped");
-        document.getElementById("bivio-card-left").classList.remove("flipped", "selected", "discarded");
-        document.getElementById("bivio-card-right").classList.remove("flipped", "selected", "discarded");
-        singleFlipped = false;
-        bivioFlipped = false;
-        
-        document.getElementById("news-feed").innerText = "";
+        // Reset dello stato visivo del flip
+        const wrapper = document.getElementById("card-inner-wrapper");
+        wrapper.className = "card-perspective";
+        eFlipped = false;
 
-        // DETERMINA IL TIPO DI TURNO
+        // Gestione della meccanica del Turno Obbligatorio (Es: ogni 4 mesi capita un bivio d'emergenza)
         const badge = document.getElementById("turn-badge");
-        
-        // Mese 4 e 8: Turno Bivio (Scelta Esclusiva)
-        if (meseAttuale === 4 || meseAttuale === 8) {
-            tipoTurnoCorrente = 'bivio';
-            badge.innerText = "⚖️ BIVIO DECISIVO: Scegli una, scarta l'altra";
-            badge.className = "badge-bivio";
-            preparaTurnoBivio();
-        } 
-        // Mese 6: Emergenza (Obbligatorio)
-        else if (meseAttuale === 6) {
-            tipoTurnoCorrente = 'emergenza';
-            badge.innerText = "🚨 TURNO OBBLIGATORIO: Spesa Medica!";
+        if (meseAttuale % 4 === 0 && mazzoEmergenzaCorrente.length === 0) {
+            isForcedTurn = true;
+            badge.innerText = "🚨 TURNO OBBLIGATORIO: Spesa Medica Improvvisa!";
             badge.className = "badge-forced";
-            document.getElementById("news-feed").innerText = "Scegli una soluzione medica. Rifiutare entrambe costa carissimo!";
-            preparaTurnoSingolo(emergenzeSpesa[0]); // Mostriamo la prima opzione
-        } 
-        // Turno Normale
-        else {
-            tipoTurnoCorrente = 'normale';
-            badge.innerText = "Turno Ordinario";
-            badge.className = "badge-normal";
-            preparaTurnoSingolo(selezionaCartaCasuale());
+            // Carica la coppia di carte di emergenza per far scegliere al giocatore il male minore
+            mazzoEmergenzaCorrente = [...emergenzeSpesa];
+            document.getElementById("news-feed").innerText = "Devi scegliere OBBLIGATORIAMENTE uno dei due piani!";
         }
 
-        // Aggiorna Dashboard
+        if (isForcedTurn && mazzoEmergenzaCorrente.length > 0) {
+            // Estrae una delle opzioni di emergenza
+            cartaCorrente = mazzoEmergenzaCorrente.pop();
+        } else {
+            // Turno Normale: Prende una carta casuale dal database standard
+            isForcedTurn = false;
+            badge.innerText = "Turno Ordinario";
+            badge.className = "badge-normal";
+            cartaCorrente = databaseCarte[Math.floor(Math.random() * databaseCarte.length)];
+        }
+
+        // AGGIORNA IL FRONTE DELLA CARTA
+        const frontEl = document.getElementById("card-front-el");
+        const taegClass = cartaCorrente.isTaegHigh ? "taeg-box" : "taeg-box taeg-safe";
+        
+        let avvisoFront = isForcedTurn ? 
+            `<div style="font-size:0.85rem; color:#ff4757; font-weight:bold; margin-top:5px;">Spesa inevitabile! Se rifiuti questa opzione, sarai costretto a valutare la successiva!</div>` : 
+            `<div style="font-size:0.8rem; color:#718093;">Consiglio: Gira la carta per studiare chi emette il finanziamento!</div>`;
+
+        frontEl.innerHTML = `
+            <div class="card-header">
+                <h3 class="card-title">${cartaCorrente.titolo}</h3>
+                <div class="card-amount">${cartaCorrente.importo}</div>
+            </div>
+            <div class="card-body">
+                ${cartaCorrente.dettagli}
+                <div class="${taegClass}">TAEG: ${cartaCorrente.taeg}</div>
+            </div>
+            ${avvisoFront}
+        `;
+
+        // AGGIORNA IL RETRO DELLA CARTA
+        const backEl = document.getElementById("card-back-el");
+        const bankClass = (cartaCorrente.bancaTipo === "tradizionale") ? "clause-box safe-bank" : "clause-box";
+        let iconaBanca = (cartaCorrente.bancaTipo === "tradizionale") ? "🏛️" : "🦈";
+
+        backEl.innerHTML = `
+            <div>
+                <span class="bank-info-title">Istituto Emittente ${iconaBanca}</span>
+                <div class="bank-name">${cartaCorrente.bancaNome}</div>
+                <p style="font-size:0.9rem; color:var(--text-muted);">Profilo Rischio: <strong style="color:#ff9f43;">${cartaCorrente.bancaTipo.toUpperCase()}</strong></p>
+            </div>
+            <div class="${bankClass}">
+                <strong>Clausole e Note:</strong><br>
+                ${cartaCorrente.bancaClausola}
+            </div>
+            <div class="card-footer-tip">Usa i pulsanti sotto o le frecce per decidere</div>
+        `;
+
+        // Aggiorna la dashboard dei dati
         document.getElementById("month-txt").innerText = `Mese ${meseAttuale} / ${maxMesi}`;
         document.getElementById("active-loans-txt").innerText = prestitiAttivi.length;
         document.getElementById("debt-pct-txt").innerText = `${sovraindebitamento}%`;
         document.getElementById("debt-bar").style.width = `${Math.min(100, sovraindebitamento)}%`;
     }
 
-    // Helper per pescare a caso
-    function selezionaCartaCasuale() {
-        return databaseCarte[Math.floor(Math.random() * databaseCarte.length)];
-    }
-
-    // --- SETUP TURNO SINGOLO ---
-    function preparaTurnoSingolo(cartaData) {
-        cartaCorrente = cartaData;
-        
-        // Mostra container singolo, nasconde bivio
-        document.getElementById("single-card-container").classList.remove("hidden");
-        document.getElementById("bivio-container").classList.remove("active");
-        
-        // Switch pulsanti interfaccia
-        document.getElementById("standard-controls").style.display = "flex";
-        document.getElementById("bivio-controls").style.display = "none";
-        document.getElementById("keyboard-hint").innerText = "Scorciatoie: Freccia ⬅️ Rifiuta | Freccia ➡️ Accetta | Freccia ⬆️ Gira";
-
-        popolaHTMLCarta("card-front-el", "card-back-el", cartaCorrente, (tipoTurnoCorrente === 'emergenza'));
-    }
-
-    // --- SETUP TURNO BIVIO ---
-    function preparaTurnoBivio() {
-        // Seleziona 2 carte diverse per il bivio
-        let carta1 = selezionaCartaCasuale();
-        let carta2 = selezionaCartaCasuale();
-        while (carta1.id === carta2.id) {
-            carta2 = selezionaCartaCasuale();
+    // FUNZIONE PER GIRARE LA CARTA
+    function toggleFlip() {
+        const wrapper = document.getElementById("card-inner-wrapper");
+        if (!eFlipped) {
+            wrapper.classList.add("flipped");
+            eFlipped = true;
+        } else {
+            wrapper.classList.remove("flipped");
+            eFlipped = false;
         }
-        
-        mazzoBivioCorrente = [carta1, carta2];
-        
-        // Mostra container bivio, nasconde singolo
-        document.getElementById("single-card-container").classList.add("hidden");
-        document.getElementById("bivio-container").classList.add("active");
-        
-        // Switch pulsanti interfaccia
-        document.getElementById("standard-controls").style.display = "none";
-        document.getElementById("bivio-controls").style.display = "flex";
-        document.getElementById("keyboard-hint").innerText = "Scorciatoie: Freccia ⬅️ Scegli SX | Freccia ➡️ Scegli DX | Freccia ⬆️ Gira";
-
-        popolaHTMLCarta("bivio-front-left", "bivio-back-left", carta1, false);
-        popolaHTMLCarta("bivio-front-right", "bivio-back-right", carta2, false);
     }
 
-    // Funzione helper per iniettare HTML nelle carte
-    function popolaHTMLCarta(idFront, idBack, data, isForced) {
-        const frontEl = document.getElementById(idFront);
-        const backEl = document.getElementById(idBack);
-        
-        const taegClass = data.isTaegHigh ? "taeg-box" : "taeg-box taeg-safe";
-        let avvisoFront = isForced ? 
-            `<div style="font-size:0.85rem; color:#ff4757; font-weight:bold; margin-top:5px;">Spesa inevitabile! Se rifiuti, ti tocca l'altra (o peggio).</div>` : 
-            `<div style="font-size:0.8rem; color:#718093;">Consiglio: Gira la carta per studiare l'istituto!</div>`;
-
-        frontEl.innerHTML = `
-            <div class="card-header">
-                <h3 class="card-title">${data.titolo}</h3>
-                <div class="card-amount">${data.importo}</div>
-            </div>
-            <div class="card-body">
-                ${data.dettagli}
-                <div class="${taegClass}">TAEG: ${data.taeg}</div>
-            </div>
-            ${avvisoFront}
-        `;
-
-        const bankClass = (data.bancaTipo === "tradizionale") ? "clause-box safe-bank" : "clause-box";
-        let iconaBanca = (data.bancaTipo === "tradizionale") ? "🏛️" : "🦈";
-
-        backEl.innerHTML = `
-            <div>
-                <span class="bank-info-title">Istituto Emittente ${iconaBanca}</span>
-                <div class="bank-name">${data.bancaNome}</div>
-                <p style="font-size:0.9rem; color:var(--text-muted);">Profilo Rischio: <strong style="color:#ff9f43;">${data.bancaTipo.toUpperCase()}</strong></p>
-            </div>
-            <div class="${bankClass}">
-                <strong>Clausole e Note:</strong><br>
-                ${data.bancaClausola}
-            </div>
-            <div class="card-footer-tip">Gira di nuovo per tornare fronte</div>
-        `;
-    }
-
-
-    // ---------------------------------------------------------
-    // 4. LOGICA DI FLIP (SINGOLA O DOPPIA)
-    // ---------------------------------------------------------
-    
-    function toggleFlipSingle() {
-        const wrapper = document.getElementById("single-card-container");
-        singleFlipped = !singleFlipped;
-        wrapper.classList.toggle("flipped", singleFlipped);
-    }
-
-    function toggleFlipBivio() {
-        const left = document.getElementById("bivio-card-left");
-        const right = document.getElementById("bivio-card-right");
-        bivioFlipped = !bivioFlipped;
-        
-        left.classList.toggle("flipped", bivioFlipped);
-        right.classList.toggle("flipped", bivioFlipped);
-    }
-
-
-    // ---------------------------------------------------------
-    // 5. GESTIONE SCELTE (SWIPE NORMALE O CLICK BIVIO)
-    // ---------------------------------------------------------
-    
-    // Gestione Turno Normale / Emergenza (Swipe)
+    // LOGICA DI SWIPE (DESTRA = ACCETTA, SINISTRA = RIFIUTA)
     function handleSwipe(direzione) {
-        if (inAnimazione || tipoTurnoCorrente === 'bivio') return;
+        if (inAnimazione) return;
         inAnimazione = true;
 
-        const wrapper = document.getElementById("single-card-container");
-        document.getElementById("news-feed").innerText = ""; 
+        const wrapper = document.getElementById("card-inner-wrapper");
+        document.getElementById("news-feed").innerText = ""; // pulisce feed rapido
 
         if (direzione === 'left') {
-            // RIFIUTA
+            // RIFIUTA IL PRESTITO
             wrapper.classList.add('swipe-left-anim');
             
-            if (tipoTurnoCorrente === 'emergenza') {
-                if (cartaCorrente.id === emergenzeSpesa[0].id) {
-                    // Ha rifiutato la prima opzione medica, deve valutare la seconda
-                    document.getElementById("news-feed").innerText = "Hai scartato la prima opzione. Ora DEVI valutare lo squalo!";
-                    setTimeout(() => {
-                        wrapper.className = "card-perspective hidden";
-                        inAnimazione = false;
-                        preparaTurnoSingolo(emergenzeSpesa[1]); // Mostra la seconda opzione
-                    }, 400);
-                    return; // Interrompe qui il flusso per non far avanzare il mese
+            if (isForcedTurn) {
+                // Se è un turno obbligatorio e rifiuti la prima opzione di emergenza...
+                if (mazzoEmergenzaCorrente.length > 0) {
+                    document.getElementById("news-feed").innerText = "Hai scartato la prima opzione. Ora DEVI valutare l'alternativa!";
                 } else {
-                    // Ha rifiutato anche la seconda! Penalità massima.
+                    // Se rifiuti anche l'ultima opzione di emergenza, vieni punito pesantemente perché la spesa medica va pagata comunque!
                     sovraindebitamento += 35;
-                    document.getElementById("news-feed").innerText = "Non puoi evitare le cure! Debito forzato (+35%).";
+                    document.getElementById("news-feed").innerText = "Non puoi rifiutare le cure! Pagato con debito d'emergenza forzato (+35% Debito).";
+                    isForcedTurn = false;
                 }
             } else {
-                // Turno normale
+                // Turno normale: rifiutare un debito voluttuario/tossico è positivo!
                 if (cartaCorrente.tipoImpegno === "voluttuario") {
+                    // Ottimo, evitato debito inutile. Piccola riduzione del debito generale se stavi risparmiando
                     sovraindebitamento = Math.max(0, sovraindebitamento - 3);
                 }
+                // Se rifiuti un prestito utile (es. pc per lavorare), non hai penalità dirette subito, ma l'imprevisto futuro potrebbe tenerne conto!
             }
 
         } else if (direzione === 'right') {
-            // ACCETTA
+            // ACCETTA IL PRESTITO
             wrapper.classList.add('swipe-right-anim');
-            applicaEffettoCarta(cartaCorrente);
+            
+            // Traccia il prestito accettato nel portfolio del giocatore
+            prestitiAttivi.push(cartaCorrente.id);
+
+            // Calcolo impatto immediato sul debito
+            if (cartaCorrente.tipoImpegno === "utile") {
+                sovraindebitamento += 12; // Debito controllato e sostenibile
+            } else if (cartaCorrente.tipoImpegno === "voluttuario") {
+                // I debiti voluttuari ad alto TAEG pesano un'esagerazione
+                let moltiplicatore = (cartaCorrente.bancaTipo === "squalo" || cartaCorrente.bancaTipo === "aggressiva") ? 30 : 18;
+                sovraindebitamento += moltiplicatore;
+            } else if (cartaCorrente.tipoImpegno.startsWith("emergenza")) {
+                // Spese mediche obbligatorie
+                let peso = (cartaCorrente.tipoImpegno === "emergenza_cattiva") ? 40 : 15;
+                sovraindebitamento += peso;
+                // Svuota il mazzo d'emergenza perché ha accettato la soluzione
+                mazzoEmergenzaCorrente = [];
+                isForcedTurn = false;
+            }
         }
 
-        // Avanzamento standard dopo swipe
+        // Attendi la fine dell'animazione del volo della carta
         setTimeout(() => {
-            avanzaTurno();
+            wrapper.className = "card-perspective"; // Reset posizioni fisiche
+            meseAttuale++; // Avanza il mese globale
+            inAnimazione = false;
+            
+            // CONTROLLO ATTIVAZIONE DEGLI IMPREVISTI / EVENTI DI VITA (Ogni 3 mesi, se non siamo a fine gioco)
+            if ((meseAttuale - 1) % 3 === 0 && meseAttuale <= maxMesi && !isForcedTurn) {
+                eseguiImprevistoDinamico();
+            } else {
+                generaNuovaCarta();
+            }
         }, 400);
     }
 
-    // Gestione Turno Bivio (Click sulla carta)
-    function selezionaBivio(latoScelto) {
-        if (inAnimazione || tipoTurnoCorrente !== 'bivio') return;
-        inAnimazione = true;
-
-        const leftEl = document.getElementById("bivio-card-left");
-        const rightEl = document.getElementById("bivio-card-right");
-        
-        let cartaScelta, cartaScartata, elScelto, elScartato;
-
-        if (latoScelto === 'left') {
-            cartaScelta = mazzoBivioCorrente[0];
-            cartaScartata = mazzoBivioCorrente[1];
-            elScelto = leftEl;
-            elScartato = rightEl;
-        } else {
-            cartaScelta = mazzoBivioCorrente[1];
-            cartaScartata = mazzoBivioCorrente[0];
-            elScelto = rightEl;
-            elScartato = leftEl;
-        }
-
-        // Animazioni Bivio
-        elScelto.classList.add("selected");
-        elScartato.classList.add("discarded");
-        
-        document.getElementById("news-feed").innerText = `Hai scelto: ${cartaScelta.titolo}`;
-        applicaEffettoCarta(cartaScelta);
-        
-        // Se si scarta un debito voluttuario tossico, piccolo bonus
-        if (cartaScartata.tipoImpegno === "voluttuario" && cartaScartata.isTaegHigh) {
-            sovraindebitamento = Math.max(0, sovraindebitamento - 2);
-        }
-
-        setTimeout(() => {
-            avanzaTurno();
-        }, 700);
-    }
-
-    // Helper per calcolare matematicamente i punteggi
-    function applicaEffettoCarta(carta) {
-        prestitiAttivi.push(carta.id);
-
-        if (carta.tipoImpegno === "utile") {
-            sovraindebitamento += 12; 
-        } else if (carta.tipoImpegno === "voluttuario") {
-            let moltiplicatore = (carta.bancaTipo === "squalo" || carta.bancaTipo === "aggressiva") ? 30 : 18;
-            sovraindebitamento += moltiplicatore;
-        } else if (carta.tipoImpegno.startsWith("emergenza")) {
-            let peso = (carta.tipoImpegno === "emergenza_cattiva") ? 40 : 15;
-            sovraindebitamento += peso;
-        }
-    }
-
-    // Fine turno e controllo imprevisti
-    function avanzaTurno() {
-        meseAttuale++; 
-        inAnimazione = false;
-        
-        // Ogni 3 mesi (Mese 3, Mese 7, Mese 11) c'è un evento imprevisto, tranne fine gioco
-        if ((meseAttuale - 1) % 3 === 0 && (meseAttuale - 1) !== 0 && meseAttuale <= maxMesi) {
-            eseguiImprevistoDinamico();
-        } else {
-            generaNuovaCarta();
-        }
-    }
-
-
-    // ---------------------------------------------------------
-    // 6. EVENTI E FINE GIOCO (UI SENZA ALERT)
-    // ---------------------------------------------------------
-
+    // MECCANICA DEGLI IMPREVISTI COLLEGATI (PUNTO 2 E RICHIESTA UTENTE)
+    // Sfrutta l'array dei prestiti attivi per determinare se una scelta passata è stata fortunata o tossica
     function eseguiImprevistoDinamico() {
+        // Cerca se l'utente ha fatto determinate scelte
         const haNotebook = prestitiAttivi.includes("pc_lavoro");
         const haMaster = prestitiAttivi.includes("corso_coding");
         const haSmartphoneTossico = prestitiAttivi.includes("smartphone_top");
         const haVacanzaBali = prestitiAttivi.includes("vacanza_lusso");
         const haMonopattinoTossico = prestitiAttivi.includes("monopattino_mod");
-        const haDivano = prestitiAttivi.includes("arredo_design");
 
+        // Elenco imprevisti possibili da filtrare in base alla storia del giocatore
         let opzioniEvento = [];
 
+        // 1. Caso Fortunato: Ha comprato il PC da lavoro o fatto il Master
         if (haNotebook || haMaster) {
             opzioniEvento.push({
-                icon: "🚀", title: "PROMOZIONE PROFESSIONALE!", desc: "Le tue nuove competenze digitali e gli strumenti acquisiti hanno fatto colpo sul capo! Hai ottenuto un avanzamento di carriera.",
-                effect: "EFFETTO: Entrate aumentate! (-25% Sovraindebitamento)", type: 'good',
-                action: () => { sovraindebitamento = Math.max(0, sovraindebitamento - 25); generaNuovaCarta(); }
+                icon: "🚀",
+                title: "PROMOZIONE PROFESSIONALE!",
+                desc: "Le tue nuove competenze digitali e tecnologiche hanno fatto colpo sul capo! Grazie agli strumenti acquistati o al corso seguito, hai ottenuto un avanzamento di carriera immediato.",
+                effect: "EFFETTO: Le tue maggiori entrate abbattono il debito complessivo! (-25% Sovraindebitamento)",
+                action: () => {
+                    sovraindebitamento = Math.max(0, sovraindebitamento - 25);
+                    generaNuovaCarta();
+                }
             });
         }
 
-        if (haSmartphoneTossico || haMonopattinoTossico || haDivano) {
+        // 2. Caso Sfortunato/Tossico: Ha preso lo smartphone o il monopattino con clausole folli
+        if (haSmartphoneTossico || haMonopattinoTossico) {
             opzioniEvento.push({
-                icon: "🦈", title: "CLAUSOLA RECESSIVA!", desc: "Hai presente la finanziaria a cui ti sei affidato per i beni di consumo? Hanno applicato una penale per l'inflazione nascosta nel contratto!",
-                effect: "EFFETTO: Il debito schizza in alto! (+20% Sovraindebitamento)", type: 'bad',
-                action: () => { sovraindebitamento += 20; generaNuovaCarta(); }
+                icon: "🦈",
+                title: "CLAUSOLA RECESSIVA ATTIVATA!",
+                desc: "Hai presente la finanziaria aggressiva a cui ti sei affidato per i beni di consumo? Hanno modificato unilateralmente i costi di gestione del conto a causa dell'inflazione, applicando la penale nascosta sul retro del contratto!",
+                effect: "EFFETTO: Il costo reale del tuo debito schizza verso l'alto! (+20% Sovraindebitamento)",
+                action: () => {
+                    sovraindebitamento += 20;
+                    generaNuovaCarta();
+                }
             });
         }
 
+        // 3. Caso Mancato Investimento: Se NON ha preso l'auto usata quando è apparsa
         if (!prestitiAttivi.includes("auto_usata")) {
             opzioniEvento.push({
-                icon: "🏃‍♂️", title: "PROBLEMI DI TRASPORTO", desc: "Non avendo un mezzo affidabile, sei arrivato tardi a un colloquio fondamentale, perdendo una grande opportunità.",
-                effect: "EFFETTO: Spese extra e mancati guadagni. (+15% Sovraindebitamento)", type: 'bad',
-                action: () => { sovraindebitamento += 15; generaNuovaCarta(); }
+                icon: "🏃‍♂️",
+                title: "PROBLEMI DI TRASPORTO",
+                desc: "Non avendo un mezzo di trasporto affidabile, sei arrivato tardi a un colloquio fondamentale per una consulenza extra ben pagata. Hai perso l'opportunità economica dell'anno.",
+                effect: "EFFETTO: Spese di trasporto pubblico d'emergenza e mancati guadagni pesano sul budget. (+15% Sovraindebitamento)",
+                action: () => {
+                    sovraindebitamento += 15;
+                    generaNuovaCarta();
+                }
             });
         }
 
+        // 4. Imprevisto Neutro/Generico di vita se non si attivano i precedenti
         opzioniEvento.push({
-            icon: "🔧", title: "GUASTO CASALINGO", desc: "La lavatrice ha deciso di abbandonarti allagando il bagno. È una spesa imprevista immediata e non programmabile.",
-            effect: "EFFETTO: Devi attingere a microcrediti d'urgenza. (+10% Sovraindebitamento)", type: 'neutral',
-            action: () => { sovraindebitamento += 10; generaNuovaCarta(); }
+            icon: "🔧",
+            title: "GUASTO CASALINGO",
+            desc: "La lavatrice ha deciso di abbandonarti allagando il bagno. È una spesa imprevista immediata e non programmabile.",
+            effect: "EFFETTO: Devi attingere a microcrediti d'urgenza. (+10% Sovraindebitamento)",
+            action: () => {
+                sovraindebitamento += 10;
+                generaNuovaCarta();
+            }
         });
 
+        // Prende uno degli eventi validi emersi dalla storia del giocatore
+        // Diamo priorità agli eventi collegati alle scelte reali se esistono
         let eventoSelezionato = opzioniEvento[0]; 
-        if (opzioniEvento.length > 1 && Math.random() > 0.4) {
+        if (opzioniEvento.length > 1 && Math.random() > 0.3) {
+            // Pesca casualmente tra quelli disponibili per dare varietà
             eventoSelezionato = opzioniEvento[Math.floor(Math.random() * (opzioniEvento.length - 1))];
         }
 
-        mostraModaleNormale(eventoSelezionato.icon, eventoSelezionato.title, eventoSelezionato.desc, eventoSelezionato.effect, eventoSelezionato.type, eventoSelezionato.action);
+        // Lancia il modale visivo
+        mostraImprevisto(eventoSelezionato.title, eventoSelezionato.desc, eventoSelezionato.effect, eventoSelezionato.title.includes("PROMOZIONE"), eventoSelezionato.action);
     }
 
-    // Generatore Modale Imprevisti Standard
-    function mostraModaleNormale(icona, titolo, desc, effetto, tipo, callback) {
-        document.getElementById("ev-icon").innerText = icona;
+    // GESTIONE DELLA FINESTRA MODALE DEGLI IMPREVISTI
+    let callbackCorrenteModale = null;
+
+    function mostraImprevisto(titolo, descrizione, effetto, isGood, onConfirm) {
         document.getElementById("ev-title").innerText = titolo;
-        document.getElementById("ev-desc").innerText = desc;
+        document.getElementById("ev-desc").innerText = descrizione;
+        document.getElementById("ev-effect").innerText = effetto;
         
         const effectEl = document.getElementById("ev-effect");
-        effectEl.innerText = effetto;
-        if (tipo === 'good') effectEl.className = "event-effect effect-good";
-        else if (tipo === 'bad') effectEl.className = "event-effect effect-bad";
-        else effectEl.className = "event-effect effect-neutral";
+        if (isGood) {
+            effectEl.className = "event-effect effect-good";
+            document.getElementById("ev-icon").innerText = "🎉";
+        } else {
+            effectEl.className = "event-effect effect-bad";
+            document.getElementById("ev-icon").innerText = "🚨";
+        }
 
-        // Tasto singolo per imprevisti
-        const buttonsContainer = document.getElementById("modal-buttons-container");
-        buttonsContainer.innerHTML = `<button class="event-btn" id="modal-btn-confirm">Ho capito</button>`;
-        
-        document.getElementById("modal-btn-confirm").onclick = () => {
-            document.getElementById("event-overlay").classList.remove("active");
-            callback();
-        };
+        if (titolo.includes("VITTORIA")) document.getElementById("ev-icon").innerText = "👑";
+        if (titolo.includes("OVER")) document.getElementById("ev-icon").innerText = "💀";
 
+        callbackCorrenteModale = onConfirm;
         document.getElementById("event-overlay").classList.add("active");
     }
 
-    // Schermata di Fine Partita (Vittoria o Sconfitta) con opzioni Restart/Exit
-    function mostraSchermataFineGioco(vittoria) {
-        document.getElementById("ev-icon").innerText = vittoria ? "👑" : "💀";
-        document.getElementById("ev-title").innerText = vittoria ? "VITTORIA FINALE!" : "GAME OVER";
-        document.getElementById("ev-desc").innerText = vittoria ? 
-            "Congratulazioni! Sei riuscito a navigare nel labirinto del credito per un intero anno (12 mesi) gestendo gli imprevisti senza fallire! Hai dimostrato ottime capacità." : 
-            "La barra del sovraindebitamento è esplosa al 100%! Le rate mensili hanno superato completamente le tue entrate disponibili. Sei andato in bancarotta finanziaria.";
-        
-        const effectEl = document.getElementById("ev-effect");
-        effectEl.innerText = vittoria ? "STATUS: Pianificatore Finanziario" : "STATUS: Fallimento Economico";
-        effectEl.className = vittoria ? "event-effect effect-good" : "event-effect effect-bad";
-
-        // Due tasti per la fine del gioco (Ricomincia o Esci)
-        const buttonsContainer = document.getElementById("modal-buttons-container");
-        buttonsContainer.innerHTML = `
-            <button class="event-btn" id="modal-btn-restart"><i class="fa-solid fa-rotate-right"></i> Ricomincia</button>
-            <button class="event-btn btn-exit" id="modal-btn-exit"><i class="fa-solid fa-right-from-bracket"></i> Esci</button>
-        `;
-        
-        document.getElementById("modal-btn-restart").onclick = () => {
-            document.getElementById("event-overlay").classList.remove("active");
-            resetGioco();
-        };
-
-        document.getElementById("modal-btn-exit").onclick = () => {
-            document.getElementById("event-overlay").classList.remove("active");
-            exitToGDevelop(); // Chiama la funzione di integrazione
-        };
-
-        document.getElementById("event-overlay").classList.add("active");
+    function closeEventModal() {
+        document.getElementById("event-overlay").classList.remove("active");
+        if (callbackCorrenteModale) {
+            callbackCorrenteModale();
+        }
     }
 
+    // RESET DEL GIOCO IN CASO DI FINISH
     function resetGioco() {
         meseAttuale = 1;
         sovraindebitamento = 10;
         prestitiAttivi = [];
-        tipoTurnoCorrente = 'normale';
+        mazzoEmergenzaCorrente = [];
+        isForcedTurn = false;
         generaNuovaCarta();
     }
 
-    // ---------------------------------------------------------
-    // 7. INPUT TASTIERA GLOBALE
-    // ---------------------------------------------------------
-    
+    // CONTROLLI VELOCI DA TASTIERA (AGGIUNTI PER COMODITÀ DI SVILUPPO)
     window.addEventListener('keydown', function(e) {
-        // Ignora input se modale aperto
         if (document.getElementById("event-overlay").classList.contains("active")) {
             if (e.key === "Enter" || e.key === " ") {
-                const confirmBtn = document.getElementById("modal-btn-confirm");
-                if (confirmBtn) confirmBtn.click();
+                closeEventModal();
             }
             return;
         }
-
-        // Comportamento in base al tipo di turno
-        if (tipoTurnoCorrente === 'bivio') {
-            if (e.key === "ArrowLeft") selezionaBivio('left');
-            if (e.key === "ArrowRight") selezionaBivio('right');
-            if (e.key === "ArrowUp") toggleFlipBivio();
-        } else {
-            if (e.key === "ArrowLeft") handleSwipe('left');
-            if (e.key === "ArrowRight") handleSwipe('right');
-            if (e.key === "ArrowUp") toggleFlipSingle();
-        }
+        if (e.key === "ArrowLeft") handleSwipe('left');
+        if (e.key === "ArrowRight") handleSwipe('right');
+        if (e.key === "ArrowUp") toggleFlip();
     });
 
-    // START
+    // AVVIO DEL MINIGIOCO
     generaNuovaCarta();
 </script>
 
