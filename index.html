@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DebtMatch</title>
+    <title>DebtMatch - Il Labirinto del Credito</title>
     <style>
         :root {
             --bg-color: #0f0f13;
@@ -430,7 +430,7 @@
         <h2 id="ev-title" class="event-title">Titolo Imprevisto</h2>
         <div id="ev-desc" class="event-desc">Descrizione dell'evento...</div>
         <div id="ev-effect" class="event-effect">Effetto Finanziario</div>
-        <button class="event-btn" onclick="closeEventModal()">Ho capito</button>
+        <button id="modal-submit-btn" class="event-btn" onclick="closeEventModal()">Ho capito</button>
     </div>
 </div>
 
@@ -621,7 +621,7 @@
         if (sovraindebitamento >= 100) {
             mostraImprevisto(
                 "💥 GAME OVER", 
-                "La barra del sovraindebitamento è esplosa al 100%! Le rate mensili hanno superato completamente le tue entrate disponibili. Sei andato in bancarotta finanziaria.", 
+                "La barra del sovraindebitamento è esplosa al 100%! Le rate mensili hanno superato completamente le deine entrate disponibili. Sei andato in bancarotta finanziaria.", 
                 "EFFETTO: Fallimento Economico", 
                 false, 
                 null, 
@@ -863,7 +863,7 @@
         document.getElementById("ev-effect").innerText = effetto;
         
         const effectEl = document.getElementById("ev-effect");
-        const btnModale = document.querySelector(".event-btn");
+        const btnModale = document.getElementById("modal-submit-btn");
         
         if (isGood) {
             effectEl.className = "event-effect effect-good";
@@ -876,15 +876,15 @@
         if (titolo.includes("VITTORIA")) document.getElementById("ev-icon").innerText = "👑";
         if (titolo.includes("OVER")) document.getElementById("ev-icon").innerText = "💀";
 
-        // TASTO GRAFICO EMESSO PER LA CHIUSURA FINALE
+        // ASSEGNAZIONE E RE-INIEZIONE CORRETTA DEI COMPORTAMENTI DEL TASTO
         if (isFinal) {
             btnModale.innerText = "Chiudi e torna al gioco principale 🚪";
             btnModale.className = "event-btn exit-style";
-            btnModale.setAttribute("onclick", "chiudiEInviaAGDevelop()");
+            btnModale.onclick = chiudiEInviaAGDevelop; // Fissato l'evento nativo
         } else {
             btnModale.innerText = "Ho capito";
             btnModale.className = "event-btn";
-            btnModale.setAttribute("onclick", "closeEventModal()");
+            btnModale.onclick = closeEventModal;
             callbackCorrenteModale = onConfirm;
         }
 
